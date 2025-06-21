@@ -135,39 +135,63 @@ func (p *Parser) parseMovetext(firstToken Token, g *Game) error {
 	for tok := firstToken; tok.Type != EOF && tok.Type != ASTERISK; tok = p.s.Scan() {
 		switch tok.Type {
 		case IDENT:
-			// Is it a piece move? (e.g., Nf3)
-			if len(tok.Literal) == 3 {
-				if piece, ok := PieceSymbols[rune(tok.Literal[0])]; ok {
-					dest := tok.Literal[1:]
-					if len(dest) == 2 && dest[0] >= 'a' && dest[0] <= 'h' && dest[1] >= '1' && dest[1] <= '8' {
-						move := Move{
-							Piece: piece,
-							To: Square{
-								File: int(dest[0] - 'a'),
-								Rank: int(dest[1] - '1'),
-							},
-						}
-						g.Moves = append(g.Moves, move)
-						continue
-					}
-				}
-			}
-
-			// Is it a pawn move? (e.g., e4)
-			if len(tok.Literal) == 2 && tok.Literal[0] >= 'a' && tok.Literal[0] <= 'h' && tok.Literal[1] >= '1' && tok.Literal[1] <= '8' {
-				move := Move{
-					Piece: Pawn,
-					To: Square{
-						File: int(tok.Literal[0] - 'a'),
-						Rank: int(tok.Literal[1] - '1'),
-					},
-				}
+			// Create a separate function to parse move text to keep this clean.
+			move, ok := p.parseMove(tok.Literal)
+			if ok {
 				g.Moves = append(g.Moves, move)
 			}
 		}
 	}
 
 	return nil
+}
+
+func (p *Parser) parseMove(raw string) (Move, bool) {
+	// Piece captures like "Nxf3"
+	if len(raw) == 4 && raw[1] == 'x' {
+		if piece, ok := PieceSymbols[rune(raw[0])]; ok {
+			dest := raw[2:]
+			if len(dest) == 2 && dest[0] >= 'a' && dest[0] <= 'h' && dest[1] >= '1' && dest[1] <= '8' {
+				return Move{
+					Piece:     piece,
+					IsCapture: true,
+					To: Square{
+						File: int(dest[0] - 'a'),
+						Rank: int(dest[1] - '1'),
+					},
+				}, true
+			}
+		}
+	}
+
+	// Piece moves like "Nf3"
+	if len(raw) == 3 {
+		if piece, ok := PieceSymbols[rune(raw[0])]; ok {
+			dest := raw[1:]
+			if len(dest) == 2 && dest[0] >= 'a' && dest[0] <= 'h' && dest[1] >= '1' && dest[1] <= '8' {
+				return Move{
+					Piece: piece,
+					To: Square{
+						File: int(dest[0] - 'a'),
+						Rank: int(dest[1] - '1'),
+					},
+				}, true
+			}
+		}
+	}
+
+	// Pawn moves like "e4"
+	if len(raw) == 2 && raw[0] >= 'a' && raw[0] <= 'h' && raw[1] >= '1' && raw[1] <= '8' {
+		return Move{
+			Piece: Pawn,
+			To: Square{
+				File: int(raw[0] - 'a'),
+				Rank: int(raw[1] - '1'),
+			},
+		}, true
+	}
+
+	return Move{}, false
 }
 
 // ParseString is a convenience helper that parses a PGN string.
