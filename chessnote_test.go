@@ -59,3 +59,24 @@ func TestParsePawnMove(t *testing.T) {
 		t.Errorf("Parse() got = %v, want %v", game.Moves, want)
 	}
 }
+
+func TestParsePieceMove(t *testing.T) {
+	t.Parallel()
+	pgn := `1. Nf3 *`
+	p := chessnote.NewParser()
+	game, err := p.Parse(strings.NewReader(pgn))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	want := []chessnote.Move{
+		{
+			Piece: chessnote.Knight,
+			To:    chessnote.Square{File: 5, Rank: 2}, // f3
+		},
+	}
+
+	if !reflect.DeepEqual(game.Moves, want) {
+		t.Errorf("Parse() got = %+v, want %+v", game.Moves, want)
+	}
+}

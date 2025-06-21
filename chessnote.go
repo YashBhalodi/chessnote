@@ -44,6 +44,24 @@ type Square struct {
 // PieceType defines the type of chess piece.
 type PieceType int
 
+const (
+	Pawn PieceType = iota
+	Knight
+	Bishop
+	Rook
+	Queen
+	King
+)
+
+// PieceSymbols maps a rune to a PieceType.
+var PieceSymbols = map[rune]PieceType{
+	'N': Knight,
+	'B': Bishop,
+	'R': Rook,
+	'Q': Queen,
+	'K': King,
+}
+
 // Parser is a PGN parser that reads from an io.Reader and parses it into a Game.
 type Parser struct{}
 
@@ -84,8 +102,28 @@ func (p *Parser) Parse(r io.Reader) (*Game, error) {
 		inMovetext = true
 		tokens := strings.Fields(line)
 		for _, token := range tokens {
+			// Is it a piece move? (e.g., Nf3)
+			if len(token) == 3 {
+				if piece, ok := PieceSymbols[rune(token[0])]; ok {
+					dest := token[1:]
+					if len(dest) == 2 && dest[0] >= 'a' && dest[0] <= 'h' && dest[1] >= '1' && dest[1] <= '8' {
+						move := Move{
+							Piece: piece,
+							To: Square{
+								File: int(dest[0] - 'a'),
+								Rank: int(dest[1] - '1'),
+							},
+						}
+						game.Moves = append(game.Moves, move)
+						continue
+					}
+				}
+			}
+
+			// Is it a pawn move? (e.g., e4)
 			if len(token) == 2 && token[0] >= 'a' && token[0] <= 'h' && token[1] >= '1' && token[1] <= '8' {
 				move := Move{
+					Piece: Pawn, // Assume Pawn for now
 					To: Square{
 						File: int(token[0] - 'a'),
 						Rank: int(token[1] - '1'),
