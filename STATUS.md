@@ -89,6 +89,20 @@ The primary goal of this milestone is to prepare the library for a stable v1.0.0
 
 - [x] Publish `v0.1.0`
 
-## Next Step
+---
 
-- Plan the roadmap for `v1.0.0` and the development of the `chessnote` CLI tool.
+### Milestone 6: Library Hardening
+
+The primary goal of this milestone is to elevate the library to a true production-grade standard by adding benchmarks, fuzz testing, and contributor documentation. This will prepare us for a stable `v1.0.0` release.
+
+- **Next Step**: Add performance benchmarks to `chessnote_test.go` to validate performance claims and prevent regressions.
+- **Upcoming Tasks**:
+    - Implement a fuzz test for the parser to ensure it handles all malformed input.
+    - Create a `CONTRIBUTING.md` file to guide future contributors.
+
+---
+
+### Future Milestones
+
+- **`chessnote` CLI**: A command-line tool for validating and analyzing PGN files.
+- **GIF Renderer**: A tool to generate animated GIFs of chess games.
