@@ -21,16 +21,19 @@ type Game struct {
 	Result string
 }
 
-// Move represents a single move made by one player.
+// Move represents a single move made by one player, capturing all details
+// expressed in Standard Algebraic Notation (SAN).
 type Move struct {
-	// From is the starting square of the move.
+	// From is the starting square of the move. For many moves, this may be
+	// partially or fully zero, as PGN format often omits this information
+	// when it's not needed for disambiguation.
 	From Square
-	// To is the destination square of the move.
+	// To is the destination square of the move. This is always specified.
 	To Square
 	// Piece is the type of piece that was moved.
 	Piece PieceType
-	// Promotion is the piece type a pawn is promoted to.
-	// It is PieceType(0) (Pawn) if there is no promotion.
+	// Promotion is the piece type a pawn is promoted to. It is zero
+	// (Pawn) if there is no promotion.
 	Promotion PieceType
 	// IsCapture indicates whether the move was a capture.
 	IsCapture bool
@@ -56,15 +59,22 @@ type Square struct {
 type PieceType int
 
 const (
+	// Pawn represents a pawn piece. Note that this is the zero value for PieceType.
 	Pawn PieceType = iota
+	// Knight represents a knight piece.
 	Knight
+	// Bishop represents a bishop piece.
 	Bishop
+	// Rook represents a rook piece.
 	Rook
+	// Queen represents a queen piece.
 	Queen
+	// King represents a king piece.
 	King
 )
 
-// PieceSymbols maps a rune to a PieceType.
+// PieceSymbols maps a rune representation of a piece in PGN to a PieceType.
+// Pawns are not represented by a symbol in PGN.
 var PieceSymbols = map[rune]PieceType{
 	'N': Knight,
 	'B': Bishop,
@@ -74,17 +84,19 @@ var PieceSymbols = map[rune]PieceType{
 }
 
 // Parser is a PGN parser that reads from an io.Reader and parses it into a Game.
+// It implements a standard recursive descent parser.
 type Parser struct {
 	s *Scanner
 }
 
-// NewParser creates and returns a new PGN Parser.
+// NewParser creates and returns a new PGN Parser for the given reader.
 func NewParser(r io.Reader) *Parser {
 	return &Parser{s: NewScanner(r)}
 }
 
-// Parse reads PGN data from an io.Reader, parses it, and returns a Game object.
-// It processes tag pairs and the core movetext, including moves, captures, and checks.
+// Parse reads and parses the entire PGN data from the reader, returning a
+// single Game object. It expects the PGN data to contain exactly one game.
+// The parser stops at the first game-terminating symbol (*, 1-0, etc.).
 func (p *Parser) Parse() (*Game, error) {
 	game := &Game{
 		Tags: make(map[string]string),
@@ -233,80 +245,81 @@ func (p *Parser) parseMove(raw string) (Move, bool) {
 
 // parseCoreMove handles a move string after any suffixes/promotions have been removed.
 func (p *Parser) parseCoreMove(raw string) (Move, bool) {
-	move := Move{}
+	// A pawn capture is the only case where the move starts with a file and contains a capture.
+	// e.g. "exd5". Let's handle this special case first.
+	if len(raw) == 4 && util.IsFile(rune(raw[0])) && raw[1] == 'x' {
+		dest, ok := newSquare(raw[2:])
+		if !ok {
+			return Move{}, false // Should not happen if grammar is correct
+		}
+		return Move{
+			Piece:     Pawn,
+			From:      Square{File: int(raw[0] - 'a')},
+			To:        dest,
+			IsCapture: true,
+		}, true
+	}
 
-	// Destination is always the last 2 chars
-	if len(raw) < 2 {
+	move := Move{}
+	movetext := raw // create a mutable copy
+
+	// The destination square is always the last two characters.
+	if len(movetext) < 2 {
 		return Move{}, false
 	}
-	destStr := raw[len(raw)-2:]
+	destStr := movetext[len(movetext)-2:]
 	dest, ok := newSquare(destStr)
 	if !ok {
 		return Move{}, false
 	}
 	move.To = dest
+	movetext = movetext[:len(movetext)-2] // a.k.a 'prefix'
 
-	// Let's analyze the prefix
-	pre := raw[:len(raw)-2]
-
-	switch len(pre) {
-	case 0: // Pawn move, e.g., "e4"
-		move.Piece = Pawn
-		return move, true
-	case 1: // Standard piece move "Nf3" or pawn capture "exd5"
-		firstChar := rune(pre[0])
-		if piece, ok := PieceSymbols[firstChar]; ok { // "Nf3"
+	// Identify the piece type. Defaults to Pawn for moves like "e4".
+	move.Piece = Pawn
+	if len(movetext) > 0 {
+		if piece, ok := PieceSymbols[rune(movetext[0])]; ok {
 			move.Piece = piece
-			return move, true
-		} else if util.IsFile(firstChar) { // "exd5" requires a capture 'x'
-			// This case is handled by len(pre) == 2, e.g. "ex"
-			return Move{}, false
-		}
-	case 2: // Pawn capture "exd5", disambiguated move "Rdf8", or piece capture "Nxf3"
-		firstChar := rune(pre[0])
-		secondChar := rune(pre[1])
-
-		if util.IsFile(firstChar) && secondChar == 'x' { // Pawn capture "exd5"
-			move.Piece = Pawn
-			move.IsCapture = true
-			move.From.File = int(firstChar - 'a')
-			return move, true
-		}
-
-		if piece, ok := PieceSymbols[firstChar]; ok {
-			move.Piece = piece
-			if secondChar == 'x' { // Piece capture "Nxf3"
-				move.IsCapture = true
-			} else if util.IsFile(secondChar) { // Disambiguation "Rdf8"
-				move.From.File = int(secondChar - 'a')
-			} else if util.IsRank(secondChar) { // Disambiguation "N1c3"
-				move.From.Rank = int(secondChar - '1')
-			} else {
-				return Move{}, false
-			}
-			return move, true
-		}
-
-	case 3: // Disambiguated capture, e.g., "Rdxf8"
-		firstChar := rune(pre[0])
-		disambiguationChar := rune(pre[1])
-		captureChar := rune(pre[2])
-
-		if piece, ok := PieceSymbols[firstChar]; ok && captureChar == 'x' {
-			move.Piece = piece
-			move.IsCapture = true
-			if util.IsFile(disambiguationChar) {
-				move.From.File = int(disambiguationChar - 'a')
-			} else if util.IsRank(disambiguationChar) {
-				move.From.Rank = int(disambiguationChar - '1')
-			} else {
-				return Move{}, false
-			}
-			return move, true
+			movetext = movetext[1:]
 		}
 	}
 
-	return Move{}, false
+	// The remainder of movetext can be a disambiguation, a capture, or both.
+	// PGN standard is: [piece][disambiguation][capture][dest]
+	// So we parse disambiguation first.
+
+	// Check for disambiguation, e.g. the 'd' in "Rdf8" or '1' in "N1c3"
+	if len(movetext) > 0 {
+		char := rune(movetext[0])
+		if util.IsFile(char) || util.IsRank(char) {
+			if len(movetext) > 1 && movetext[1] == 'x' {
+				// This is a disambiguated capture, e.g., "d" in "Rdxf8"
+			} else if len(movetext) > 1 {
+				// Invalid, e.g. "Rdd4"
+				return Move{}, false
+			}
+
+			if util.IsFile(char) {
+				move.From.File = int(char - 'a')
+			} else {
+				move.From.Rank = int(char - '1')
+			}
+			movetext = movetext[1:]
+		}
+	}
+
+	// Check for a capture for piece moves, e.g. "x" in "Nxf3" or "Rdxf8"
+	if len(movetext) > 0 && movetext[0] == 'x' {
+		move.IsCapture = true
+		movetext = movetext[1:]
+	}
+
+	// If anything is left, the move is invalid.
+	if len(movetext) > 0 {
+		return Move{}, false
+	}
+
+	return move, true
 }
 
 func newSquare(s string) (Square, bool) {
@@ -320,6 +333,9 @@ func newSquare(s string) (Square, bool) {
 }
 
 // ParseString is a convenience helper that parses a PGN string.
+// It is intended for quickly parsing a complete PGN string already in memory.
+// For parsing from files or network streams, creating a Parser with NewParser
+// is recommended.
 func ParseString(s string) (*Game, error) {
 	p := NewParser(strings.NewReader(s))
 	return p.Parse()

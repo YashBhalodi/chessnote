@@ -66,6 +66,30 @@ func TestScanner(t *testing.T) {
 				{Type: EOF},
 			},
 		},
+		{
+			name:  "simple capture",
+			input: `Nxf3`,
+			want: []Token{
+				{Type: IDENT, Literal: "Nxf3"},
+				{Type: EOF},
+			},
+		},
+		{
+			name:  "kingside castle",
+			input: `O-O`,
+			want: []Token{
+				{Type: IDENT, Literal: "O-O"},
+				{Type: EOF},
+			},
+		},
+		{
+			name:  "queenside castle with check",
+			input: `O-O-O+`,
+			want: []Token{
+				{Type: IDENT, Literal: "O-O-O+"},
+				{Type: EOF},
+			},
+		},
 	}
 
 	for _, tc := range testCases {

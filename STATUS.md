@@ -34,9 +34,17 @@ We have successfully **completed Milestone 1** and are now beginning **Milestone
 
 ---
 
-### Next Steps (Milestone 2)
+### Next Steps: Refactoring & Cleanup
 
-The primary goal of this milestone is to support the full PGN specification.
+The project is currently in a dedicated refactoring and cleanup phase to improve code quality, maintainability, and robustness before proceeding with new features.
+
+- **Tasks**:
+  - Consolidate all move-parsing tests into a single, comprehensive table-driven test.
+  - Refactor the `parseCoreMove` function for clarity and robustness.
+  - Add more test cases to the `scanner_test.go` to cover all valid identifier characters.
+  - Review and update all GoDoc comments and project documentation (`README.md`, EBNF grammar).
+
+Once this cleanup phase is complete, we will proceed with implementing comments.
 
 #### 1. Immediate Next Step: Comments
 

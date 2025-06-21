@@ -38,93 +38,135 @@ func TestParseTagPairs(t *testing.T) {
 	}
 }
 
-func TestParsePawnMove(t *testing.T) {
+func TestParseMoves(t *testing.T) {
 	t.Parallel()
-	pgn := `1. e4 *`
-	game, err := chessnote.ParseString(pgn)
-	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
-
-	want := []chessnote.Move{
+	testCases := []struct {
+		name string
+		pgn  string
+		want chessnote.Move
+	}{
+		// Pawn Moves
 		{
-			To: chessnote.Square{File: 4, Rank: 3}, // e4
+			name: "pawn move",
+			pgn:  "1. e4 *",
+			want: chessnote.Move{Piece: chessnote.Pawn, To: chessnote.Square{File: 4, Rank: 3}},
+		},
+		{
+			name: "pawn move with check",
+			pgn:  "1. e4+ *",
+			want: chessnote.Move{Piece: chessnote.Pawn, To: chessnote.Square{File: 4, Rank: 3}, IsCheck: true},
+		},
+		{
+			name: "pawn move with mate",
+			pgn:  "1. e4# *",
+			want: chessnote.Move{Piece: chessnote.Pawn, To: chessnote.Square{File: 4, Rank: 3}, IsMate: true},
+		},
+		// Piece Moves
+		{
+			name: "piece move",
+			pgn:  "1. Nf3 *",
+			want: chessnote.Move{Piece: chessnote.Knight, To: chessnote.Square{File: 5, Rank: 2}},
+		},
+		// Captures
+		{
+			name: "piece capture",
+			pgn:  "1. Nxf3 *",
+			want: chessnote.Move{Piece: chessnote.Knight, To: chessnote.Square{File: 5, Rank: 2}, IsCapture: true},
+		},
+		{
+			name: "pawn capture",
+			pgn:  "1. exd5 *",
+			want: chessnote.Move{Piece: chessnote.Pawn, From: chessnote.Square{File: 4}, To: chessnote.Square{File: 3, Rank: 4}, IsCapture: true},
+		},
+		// Disambiguation
+		{
+			name: "file disambiguation",
+			pgn:  "1. Rdf8 *",
+			want: chessnote.Move{Piece: chessnote.Rook, From: chessnote.Square{File: 3}, To: chessnote.Square{File: 5, Rank: 7}},
+		},
+		{
+			name: "rank disambiguation",
+			pgn:  "1. N1c3 *",
+			want: chessnote.Move{Piece: chessnote.Knight, From: chessnote.Square{Rank: 0}, To: chessnote.Square{File: 2, Rank: 2}},
+		},
+		{
+			name: "file disambiguation with capture",
+			pgn:  "1. Rdxf8 *",
+			want: chessnote.Move{Piece: chessnote.Rook, From: chessnote.Square{File: 3}, To: chessnote.Square{File: 5, Rank: 7}, IsCapture: true},
+		},
+		{
+			name: "rank disambiguation with capture",
+			pgn:  "1. N1xc3 *",
+			want: chessnote.Move{Piece: chessnote.Knight, From: chessnote.Square{Rank: 0}, To: chessnote.Square{File: 2, Rank: 2}, IsCapture: true},
+		},
+		// Promotion
+		{
+			name: "simple promotion",
+			pgn:  "1. e8=Q *",
+			want: chessnote.Move{Piece: chessnote.Pawn, To: chessnote.Square{File: 4, Rank: 7}, Promotion: chessnote.Queen},
+		},
+		{
+			name: "promotion with capture",
+			pgn:  "1. exd8=R *",
+			want: chessnote.Move{Piece: chessnote.Pawn, From: chessnote.Square{File: 4}, To: chessnote.Square{File: 3, Rank: 7}, IsCapture: true, Promotion: chessnote.Rook},
+		},
+		{
+			name: "promotion with check",
+			pgn:  "1. e8=Q+ *",
+			want: chessnote.Move{Piece: chessnote.Pawn, To: chessnote.Square{File: 4, Rank: 7}, Promotion: chessnote.Queen, IsCheck: true},
+		},
+		// Castling
+		{
+			name: "kingside castle",
+			pgn:  "1. O-O *",
+			want: chessnote.Move{Piece: chessnote.King, IsKingsideCastle: true},
+		},
+		{
+			name: "queenside castle",
+			pgn:  "1. O-O-O *",
+			want: chessnote.Move{Piece: chessnote.King, IsQueensideCastle: true},
+		},
+		{
+			name: "kingside castle with check",
+			pgn:  "1. O-O+ *",
+			want: chessnote.Move{Piece: chessnote.King, IsKingsideCastle: true, IsCheck: true},
 		},
 	}
 
-	if !reflect.DeepEqual(game.Moves, want) {
-		t.Errorf("Parse() got = %v, want %v", game.Moves, want)
-	}
-}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			game, err := chessnote.ParseString(tc.pgn)
+			if err != nil {
+				t.Fatalf("Parse() error = %v, for PGN: %s", err, tc.pgn)
+			}
+			if len(game.Moves) != 1 {
+				t.Fatalf("expected 1 move, got %d", len(game.Moves))
+			}
+			got := game.Moves[0]
 
-func TestParsePieceMove(t *testing.T) {
-	t.Parallel()
-	pgn := `1. Nf3 *`
-	game, err := chessnote.ParseString(pgn)
-	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
+			// For ambiguous moves, we only care about the part that was specified.
+			// The reflect.DeepEqual check below will handle the rest of the fields.
+			if tc.name == "pawn capture" || tc.name == "file disambiguation" || tc.name == "file disambiguation with capture" || tc.name == "promotion with capture" {
+				if got.From.File != tc.want.From.File {
+					t.Errorf("Parse() got From.File = %d, want %d", got.From.File, tc.want.From.File)
+				}
+				// Clear the rank for the final DeepEqual check since it's ambiguous.
+				got.From.Rank = 0
+				tc.want.From.Rank = 0
+			}
+			if tc.name == "rank disambiguation" || tc.name == "rank disambiguation with capture" {
+				if got.From.Rank != tc.want.From.Rank {
+					t.Errorf("Parse() got From.Rank = %d, want %d", got.From.Rank, tc.want.From.Rank)
+				}
+				// Clear the file for the final DeepEqual check since it's ambiguous.
+				got.From.File = 0
+				tc.want.From.File = 0
+			}
 
-	want := []chessnote.Move{
-		{
-			Piece: chessnote.Knight,
-			To:    chessnote.Square{File: 5, Rank: 2}, // f3
-		},
-	}
-
-	if !reflect.DeepEqual(game.Moves, want) {
-		t.Errorf("Parse() got = %+v, want %+v", game.Moves, want)
-	}
-}
-
-func TestParseCapture(t *testing.T) {
-	t.Parallel()
-	pgn := `1. Nxf3 *`
-	game, err := chessnote.ParseString(pgn)
-	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
-
-	want := []chessnote.Move{
-		{
-			Piece:     chessnote.Knight,
-			To:        chessnote.Square{File: 5, Rank: 2}, // f3
-			IsCapture: true,
-		},
-	}
-
-	if !reflect.DeepEqual(game.Moves, want) {
-		t.Errorf("Parse() got = %+v, want %+v", game.Moves, want)
-	}
-}
-
-func TestParsePawnCapture(t *testing.T) {
-	t.Parallel()
-	pgn := `1. exd5 *`
-	game, err := chessnote.ParseString(pgn)
-	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
-
-	want := []chessnote.Move{
-		{
-			Piece:     chessnote.Pawn,
-			From:      chessnote.Square{File: 4},          // From 'e' file
-			To:        chessnote.Square{File: 3, Rank: 4}, // To 'd5'
-			IsCapture: true,
-		},
-	}
-
-	// Custom comparison to ignore the From.Rank, which is ambiguous for this move.
-	if len(game.Moves) != 1 {
-		t.Fatalf("expected 1 move, got %d", len(game.Moves))
-	}
-	got := game.Moves[0]
-	if got.Piece != want[0].Piece ||
-		got.From.File != want[0].From.File ||
-		got.To != want[0].To ||
-		got.IsCapture != want[0].IsCapture {
-		t.Errorf("Parse() got = %+v, want %+v", got, want[0])
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("Parse() got = %+v, want %+v", got, tc.want)
+			}
+		})
 	}
 }
 
@@ -167,248 +209,6 @@ func TestNewSquare(t *testing.T) {
 			}
 			if gotOk && !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("newSquare() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestParseCheck(t *testing.T) {
-	t.Parallel()
-	pgn := `1. e4+ *`
-	game, err := chessnote.ParseString(pgn)
-	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
-
-	want := []chessnote.Move{
-		{
-			Piece:   chessnote.Pawn,
-			To:      chessnote.Square{File: 4, Rank: 3}, // e4
-			IsCheck: true,
-		},
-	}
-
-	if !reflect.DeepEqual(game.Moves, want) {
-		t.Errorf("Parse() got = %+v, want %+v", game.Moves, want)
-	}
-}
-
-func TestParseCheckmate(t *testing.T) {
-	t.Parallel()
-	pgn := `1. e4# *`
-	game, err := chessnote.ParseString(pgn)
-	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
-	}
-
-	want := []chessnote.Move{
-		{
-			Piece:  chessnote.Pawn,
-			To:     chessnote.Square{File: 4, Rank: 3}, // e4
-			IsMate: true,
-		},
-	}
-
-	if !reflect.DeepEqual(game.Moves, want) {
-		t.Errorf("Parse() got = %+v, want %+v", game.Moves, want)
-	}
-}
-
-func TestParseDisambiguation(t *testing.T) {
-	t.Parallel()
-	testCases := []struct {
-		name string
-		pgn  string
-		want chessnote.Move
-	}{
-		{
-			name: "file disambiguation",
-			pgn:  "1. Rdf8 *",
-			want: chessnote.Move{
-				Piece: chessnote.Rook,
-				From:  chessnote.Square{File: 3},          // 'd' file
-				To:    chessnote.Square{File: 5, Rank: 7}, // f8
-			},
-		},
-		{
-			name: "rank disambiguation",
-			pgn:  "1. N1c3 *",
-			want: chessnote.Move{
-				Piece: chessnote.Knight,
-				From:  chessnote.Square{Rank: 0},          // '1' rank
-				To:    chessnote.Square{File: 2, Rank: 2}, // c3
-			},
-		},
-		{
-			name: "file disambiguation with capture",
-			pgn:  "1. Rdxf8 *",
-			want: chessnote.Move{
-				Piece:     chessnote.Rook,
-				From:      chessnote.Square{File: 3},          // 'd' file
-				To:        chessnote.Square{File: 5, Rank: 7}, // f8
-				IsCapture: true,
-			},
-		},
-		{
-			name: "rank disambiguation with capture",
-			pgn:  "1. N1xc3 *",
-			want: chessnote.Move{
-				Piece:     chessnote.Knight,
-				From:      chessnote.Square{Rank: 0},          // '1' rank
-				To:        chessnote.Square{File: 2, Rank: 2}, // c3
-				IsCapture: true,
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			game, err := chessnote.ParseString(tc.pgn)
-			if err != nil {
-				t.Fatalf("Parse() error = %v", err)
-			}
-			if len(game.Moves) != 1 {
-				t.Fatalf("expected 1 move, got %d", len(game.Moves))
-			}
-
-			got := game.Moves[0]
-
-			// Custom comparison to ignore ambiguous parts of From square
-			if got.Piece != tc.want.Piece ||
-				got.To != tc.want.To ||
-				got.IsCapture != tc.want.IsCapture {
-				t.Errorf("Parse() got basic fields = %+v, want %+v", got, tc.want)
-			}
-
-			// a bit verbose, but clear.
-			switch tc.name {
-			case "file disambiguation", "file disambiguation with capture":
-				if got.From.File != tc.want.From.File {
-					t.Errorf("Parse() got From.File = %d, want %d", got.From.File, tc.want.From.File)
-				}
-			case "rank disambiguation", "rank disambiguation with capture":
-				if got.From.Rank != tc.want.From.Rank {
-					t.Errorf("Parse() got From.Rank = %d, want %d", got.From.Rank, tc.want.From.Rank)
-				}
-			}
-		})
-	}
-}
-
-func TestParsePromotion(t *testing.T) {
-	t.Parallel()
-	testCases := []struct {
-		name string
-		pgn  string
-		want chessnote.Move
-	}{
-		{
-			name: "simple promotion",
-			pgn:  "1. e8=Q *",
-			want: chessnote.Move{
-				Piece:     chessnote.Pawn,
-				To:        chessnote.Square{File: 4, Rank: 7}, // e8
-				Promotion: chessnote.Queen,
-			},
-		},
-		{
-			name: "promotion with capture",
-			pgn:  "1. exd8=R *",
-			want: chessnote.Move{
-				Piece:     chessnote.Pawn,
-				From:      chessnote.Square{File: 4},          // 'e' file
-				To:        chessnote.Square{File: 3, Rank: 7}, // d8
-				IsCapture: true,
-				Promotion: chessnote.Rook,
-			},
-		},
-		{
-			name: "promotion with check",
-			pgn:  "1. e8=Q+ *",
-			want: chessnote.Move{
-				Piece:     chessnote.Pawn,
-				To:        chessnote.Square{File: 4, Rank: 7}, // e8
-				Promotion: chessnote.Queen,
-				IsCheck:   true,
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			game, err := chessnote.ParseString(tc.pgn)
-			if err != nil {
-				t.Fatalf("Parse() error = %v", err)
-			}
-			if len(game.Moves) != 1 {
-				t.Fatalf("expected 1 move, got %d", len(game.Moves))
-			}
-			got := game.Moves[0]
-
-			// Custom comparison for pawn capture promotion
-			if tc.name == "promotion with capture" {
-				if got.From.File != tc.want.From.File {
-					t.Errorf("Parse() got From.File = %d, want %d", got.From.File, tc.want.From.File)
-				}
-				// create a copy and clear the From field for the DeepEqual check
-				got.From = chessnote.Square{}
-				tc.want.From = chessnote.Square{}
-			}
-
-			if !reflect.DeepEqual(got, tc.want) {
-				t.Errorf("Parse() got = %+v, want %+v", got, tc.want)
-			}
-		})
-	}
-}
-
-func TestParseCastling(t *testing.T) {
-	t.Parallel()
-	testCases := []struct {
-		name string
-		pgn  string
-		want chessnote.Move
-	}{
-		{
-			name: "kingside castle",
-			pgn:  "1. O-O *",
-			want: chessnote.Move{
-				Piece:            chessnote.King,
-				IsKingsideCastle: true,
-			},
-		},
-		{
-			name: "queenside castle",
-			pgn:  "1. O-O-O *",
-			want: chessnote.Move{
-				Piece:             chessnote.King,
-				IsQueensideCastle: true,
-			},
-		},
-		{
-			name: "kingside castle with check",
-			pgn:  "1. O-O+ *",
-			want: chessnote.Move{
-				Piece:            chessnote.King,
-				IsKingsideCastle: true,
-				IsCheck:          true,
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			game, err := chessnote.ParseString(tc.pgn)
-			if err != nil {
-				t.Fatalf("Parse() error = %v", err)
-			}
-			if len(game.Moves) != 1 {
-				t.Fatalf("expected 1 move, got %d", len(game.Moves))
-			}
-			got := game.Moves[0]
-
-			if !reflect.DeepEqual(got, tc.want) {
-				t.Errorf("Parse() got = %+v, want %+v", got, tc.want)
 			}
 		})
 	}
