@@ -147,8 +147,28 @@ func (p *Parser) parseMovetext(firstToken Token, g *Game) error {
 }
 
 func (p *Parser) parseMove(raw string) (Move, bool) {
-	// Piece captures like "Nxf3"
+	// Pawn captures like "exd5"
 	if len(raw) == 4 && raw[1] == 'x' {
+		// This could be a piece or a pawn capture. Check if the first char is a file.
+		if raw[0] >= 'a' && raw[0] <= 'h' {
+			dest := raw[2:]
+			if len(dest) == 2 && dest[0] >= 'a' && dest[0] <= 'h' && dest[1] >= '1' && dest[1] <= '8' {
+				return Move{
+					Piece:     Pawn,
+					IsCapture: true,
+					From: Square{
+						File: int(raw[0] - 'a'),
+						// Rank is unknown from this notation
+					},
+					To: Square{
+						File: int(dest[0] - 'a'),
+						Rank: int(dest[1] - '1'),
+					},
+				}, true
+			}
+		}
+
+		// Piece captures like "Nxf3"
 		if piece, ok := PieceSymbols[rune(raw[0])]; ok {
 			dest := raw[2:]
 			if len(dest) == 2 && dest[0] >= 'a' && dest[0] <= 'h' && dest[1] >= '1' && dest[1] <= '8' {

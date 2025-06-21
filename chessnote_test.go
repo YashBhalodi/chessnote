@@ -97,3 +97,33 @@ func TestParseCapture(t *testing.T) {
 		t.Errorf("Parse() got = %+v, want %+v", game.Moves, want)
 	}
 }
+
+func TestParsePawnCapture(t *testing.T) {
+	t.Parallel()
+	pgn := `1. exd5 *`
+	game, err := chessnote.ParseString(pgn)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	want := []chessnote.Move{
+		{
+			Piece:     chessnote.Pawn,
+			From:      chessnote.Square{File: 4},          // From 'e' file
+			To:        chessnote.Square{File: 3, Rank: 4}, // To 'd5'
+			IsCapture: true,
+		},
+	}
+
+	// Custom comparison to ignore the From.Rank, which is ambiguous for this move.
+	if len(game.Moves) != 1 {
+		t.Fatalf("expected 1 move, got %d", len(game.Moves))
+	}
+	got := game.Moves[0]
+	if got.Piece != want[0].Piece ||
+		got.From.File != want[0].From.File ||
+		got.To != want[0].To ||
+		got.IsCapture != want[0].IsCapture {
+		t.Errorf("Parse() got = %+v, want %+v", got, want[0])
+	}
+}
