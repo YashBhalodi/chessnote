@@ -45,6 +45,9 @@ type Move struct {
 	IsKingsideCastle bool
 	// IsQueensideCastle indicates a queenside castling move (O-O-O).
 	IsQueensideCastle bool
+	// Variations lists any alternative move sequences that could have been
+	// played. This is used for representing Recursive Annotation Variations (RAVs).
+	Variations [][]Move
 }
 
 // Square represents a single square on the board (e.g., e4).
@@ -86,12 +89,20 @@ var PieceSymbols = map[rune]PieceType{
 // Parser is a PGN parser that reads from an io.Reader and parses it into a Game.
 // It implements a standard recursive descent parser.
 type Parser struct {
-	s *Scanner
+	s   *Scanner
+	tok Token // The current token
 }
 
 // NewParser creates and returns a new PGN Parser for the given reader.
 func NewParser(r io.Reader) *Parser {
-	return &Parser{s: NewScanner(r)}
+	p := &Parser{s: NewScanner(r)}
+	p.scan() // Initialize the first token
+	return p
+}
+
+// scan moves to the next token and sets it as the parser's current token.
+func (p *Parser) scan() {
+	p.tok = p.s.Scan()
 }
 
 // Parse reads and parses the entire PGN data from the reader, returning a
@@ -103,8 +114,7 @@ func (p *Parser) Parse() (*Game, error) {
 	}
 
 	for {
-		tok := p.s.Scan()
-		switch tok.Type {
+		switch p.tok.Type {
 		case EOF:
 			return game, nil
 		case LBRACKET:
@@ -112,71 +122,102 @@ func (p *Parser) Parse() (*Game, error) {
 				return nil, err
 			}
 		case COMMENT:
-			// Ignore comments that appear before the movetext section.
+			p.scan() // Ignore comments
 		case IDENT, NUMBER:
 			// Once we see an ident or number outside a tag, we are in the movetext.
-			if err := p.parseMovetext(tok, game); err != nil {
+			if err := p.parseMovetext(&game.Moves); err != nil {
 				return nil, err
 			}
-			// After parsing movetext, the game is complete.
+			// After parsing movetext, we might have a result token.
+			if isResult(p.tok) {
+				game.Result = p.tok.Literal
+			}
 			return game, nil
+		default:
+			return nil, fmt.Errorf("unexpected token at start of game: %v", p.tok)
 		}
 	}
 }
 
 func (p *Parser) parseTagPair(g *Game) error {
-	key := p.s.Scan()
+	p.scan() // Consume '['
+	key := p.tok
 	if key.Type != IDENT {
 		return fmt.Errorf("expected ident for tag key, got %v", key)
 	}
 
-	value := p.s.Scan()
+	p.scan() // Consume key
+	value := p.tok
 	if value.Type != STRING {
 		return fmt.Errorf("expected string for tag value, got %v", value)
 	}
-
 	g.Tags[key.Literal] = value.Literal
 
-	end := p.s.Scan()
-	if end.Type != RBRACKET {
-		return fmt.Errorf("expected ']' to close tag, got %v", end)
+	p.scan() // Consume value
+	if p.tok.Type != RBRACKET {
+		return fmt.Errorf("expected ']' to close tag, got %v", p.tok)
 	}
+	p.scan() // Consume ']'
 	return nil
 }
 
-func (p *Parser) parseMovetext(firstToken Token, g *Game) error {
-	tok := firstToken
+func (p *Parser) parseMovetext(moves *[]Move) error {
 	for {
-		switch tok.Type {
-		case EOF:
-			return nil // Clean exit
-		case ASTERISK:
-			g.Result = tok.Literal
-			return nil
+		switch p.tok.Type {
+		case EOF, ASTERISK, RPAREN:
+			return nil // Let caller handle termination
 		case IDENT:
-			// Could be a move, or a result like "1-0", "0-1", or "1/2-1/2".
-			// The scanner is not perfect, so "1/2-1/2" will be multiple tokens.
-			// We handle the common cases here.
-			if tok.Literal == "1-0" || tok.Literal == "0-1" || tok.Literal == "1/2-1/2" {
-				g.Result = tok.Literal
-				return nil
+			if isResult(p.tok) {
+				return nil // Let caller handle result
 			}
-
-			move, ok := p.parseMove(tok.Literal)
+			move, ok := p.parseMove(p.tok.Literal)
 			if ok {
-				g.Moves = append(g.Moves, move)
+				*moves = append(*moves, move)
 			}
-		case NUMBER, DOT:
-			// Ignore move numbers and their trailing dots.
-		case COMMENT:
-			// Ignore comments within movetext.
+			p.scan()
+		case NUMBER, DOT, COMMENT:
+			p.scan() // Ignore
+		case LPAREN:
+			if len(*moves) == 0 {
+				return fmt.Errorf("found variation before any moves")
+			}
+			lastMove := &(*moves)[len(*moves)-1]
+			if err := p.parseRAV(lastMove); err != nil {
+				return err
+			}
 		default:
-			// We should not see other tokens like LBRACKET here.
-			// Return an error for unexpected tokens.
-			return fmt.Errorf("unexpected token in movetext: %v", tok)
+			return fmt.Errorf("unexpected token in movetext: %v", p.tok)
 		}
-		tok = p.s.Scan()
 	}
+}
+
+func (p *Parser) parseRAV(parentMove *Move) error {
+	p.scan() // Consume '('
+	var variationMoves []Move
+	if err := p.parseMovetext(&variationMoves); err != nil {
+		return err
+	}
+
+	if p.tok.Type != RPAREN {
+		return fmt.Errorf("expected ')' to close variation, got %v", p.tok)
+	}
+	p.scan() // Consume ')'
+
+	if parentMove.Variations == nil {
+		parentMove.Variations = make([][]Move, 0)
+	}
+	parentMove.Variations = append(parentMove.Variations, variationMoves)
+	return nil
+}
+
+func isResult(tok Token) bool {
+	if tok.Type == ASTERISK {
+		return true
+	}
+	if tok.Type == IDENT && (tok.Literal == "1-0" || tok.Literal == "0-1" || tok.Literal == "1/2-1/2") {
+		return true
+	}
+	return false
 }
 
 func (p *Parser) parseMove(raw string) (Move, bool) {

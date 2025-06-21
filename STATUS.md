@@ -46,17 +46,18 @@ The primary goal of this milestone is to support the full PGN specification.
 #### 1. Completed Features (Milestone 2)
 
 - **Comments**: The parser now handles both single-line (`;`) and multi-line (`{...}`) comments by correctly ignoring them.
+- **Recursive Annotation Variations (RAVs)**: The parser now correctly handles nested move lines, e.g., `(1. e5 d5)`. The parser was refactored to use a stateful, recursive descent approach.
 
-#### 2. Immediate Next Step: Recursive Annotation Variations (RAVs)
+#### 2. Immediate Next Step: Numeric Annotation Glyphs (NAGs)
 
-The next feature to be implemented is handling RAVs.
+The next feature to be implemented is handling NAGs.
 
-- **Task**: Update the parser to handle nested move lines, e.g., `(1. e5 d5)`.
+- **Task**: Update the parser to handle NAGs, e.g., `$1`, `$2`.
 - **Files to Update**: `chessnote.go`, `chessnote_test.go`, `scanner.go`, `token.go`.
-- **EBNF to Add**: Update grammar to include RAVs.
+- **EBNF to Add**: Update grammar to include NAGs.
 
 #### 3. Upcoming Features
 
-Once RAVs are complete, we will proceed with the following features in order:
+Once NAGs are complete, we will proceed with the following features in order:
 
-- **Numeric Annotation Glyphs (NAGs)**: Parsing annotations like `$1`, `$2`, etc.
+- A full review of the parser's semantic validation capabilities.

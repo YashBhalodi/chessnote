@@ -214,6 +214,39 @@ func TestParseWithComments(t *testing.T) {
 	}
 }
 
+func TestParseWithRAV(t *testing.T) {
+	t.Parallel()
+	pgn := `1. e4 (1. d4) 1... e5 *`
+	game, err := chessnote.ParseString(pgn)
+	if err != nil {
+		t.Fatalf("ParseString() failed: %v", err)
+	}
+
+	if len(game.Moves) != 2 {
+		t.Fatalf("expected 2 moves, got %d", len(game.Moves))
+	}
+
+	mainMove := game.Moves[0]
+	if mainMove.Piece != chessnote.Pawn || mainMove.To != (chessnote.Square{File: 4, Rank: 3}) {
+		t.Errorf("unexpected main move: got %+v", mainMove)
+	}
+
+	if len(mainMove.Variations) != 1 {
+		t.Fatalf("expected 1 variation, got %d", len(mainMove.Variations))
+	}
+
+	variation := mainMove.Variations[0]
+	if len(variation) != 1 {
+		t.Fatalf("expected 1 move in variation, got %d", len(variation))
+	}
+
+	variationMove := variation[0]
+	expectedVariationMove := chessnote.Move{Piece: chessnote.Pawn, To: chessnote.Square{File: 3, Rank: 3}}
+	if !reflect.DeepEqual(variationMove, expectedVariationMove) {
+		t.Errorf("got variation move %+v, want %+v", variationMove, expectedVariationMove)
+	}
+}
+
 // newSquare is an unexported function, so we test it here in the same package.
 func TestNewSquare(t *testing.T) {
 	t.Parallel()

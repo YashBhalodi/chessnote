@@ -25,6 +25,8 @@ const (
 	// Punctuation
 	LBRACKET // [
 	RBRACKET // ]
+	LPAREN   // (
+	RPAREN   // )
 	ASTERISK // *
 	DOT      // .
 )

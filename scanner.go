@@ -37,6 +37,10 @@ func (s *Scanner) Scan() Token {
 		return Token{Type: LBRACKET, Literal: string(r)}
 	case ']':
 		return Token{Type: RBRACKET, Literal: string(r)}
+	case '(':
+		return Token{Type: LPAREN, Literal: string(r)}
+	case ')':
+		return Token{Type: RPAREN, Literal: string(r)}
 	case '"':
 		return s.scanString()
 	case '.':
