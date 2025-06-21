@@ -70,7 +70,7 @@ func (s *Scanner) scanIdent() Token {
 		r := s.read()
 		if r == eof {
 			break
-		} else if !util.IsLetter(r) && !util.IsDigit(r) && r != '_' && r != '+' && r != '#' && r != 'x' {
+		} else if !util.IsLetter(r) && !util.IsDigit(r) && r != '_' && r != '+' && r != '#' && r != 'x' && r != '=' {
 			s.unread()
 			break
 		}

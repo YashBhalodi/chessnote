@@ -28,6 +28,8 @@ We have successfully **completed Milestone 1** and are now beginning **Milestone
 - **Architectural Refinements**:
   - The parser has been refactored to use a `Scanner` for efficient tokenization.
   - Common logic has been centralized into an `internal/util` package with its own tests.
+- **Move Disambiguation**: The parser now handles movetext like `Rdf8` and `N1c3`.
+- **Pawn Promotion**: The parser now handles movetext like `e8=Q` and `exd8=R+`.
 
 ---
 
@@ -35,20 +37,18 @@ We have successfully **completed Milestone 1** and are now beginning **Milestone
 
 The primary goal of this milestone is to support the full PGN specification.
 
-#### 1. Immediate Next Step: Move Disambiguation
+#### 1. Immediate Next Step: Castling
 
-The next feature to be implemented is handling moves that require disambiguation.
+The next feature to be implemented is handling castling.
 
-- **Task**: Update the parser to handle movetext like `Rdf8` (specifying the 'd' file for the Rook) or `N1c3` (specifying the '1' rank for the Knight).
-- **Files to Update**: `chessnote.go`, `chessnote_test.go`.
-- **EBNF to Add**: Update `move` in `grammar.ebnf` to include optional rank/file specifiers.
+- **Task**: Update the parser to handle both kingside (`O-O`) and queenside (`O-O-O`) castling.
+- **Files to Update**: `chessnote.go`, `chessnote_test.go`, `scanner.go`.
+- **EBNF to Add**: Update `move` in `grammar.ebnf` to include castling notation.
 
 #### 2. Upcoming Features
 
-Once disambiguation is complete, we will proceed with the following features in order:
+Once castling is complete, we will proceed with the following features in order:
 
-- **Pawn Promotion**: Parsing moves like `e8=Q`.
-- **Castling**: Parsing both kingside (`O-O`) and queenside (`O-O-O`) castling.
 - **Comments**: Handling both single-line (`;`) and multi-line (`{...}`) comments.
 - **Recursive Annotation Variations (RAVs)**: Parsing nested move lines, e.g., `(1. e5 d5)`.
 - **Numeric Annotation Glyphs (NAGs)**: Parsing annotations like `$1`, `$2`, etc. 

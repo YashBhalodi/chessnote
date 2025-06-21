@@ -29,6 +29,9 @@ type Move struct {
 	To Square
 	// Piece is the type of piece that was moved.
 	Piece PieceType
+	// Promotion is the piece type a pawn is promoted to.
+	// It is PieceType(0) (Pawn) if there is no promotion.
+	Promotion PieceType
 	// IsCapture indicates whether the move was a capture.
 	IsCapture bool
 	// IsCheck indicates whether the move resulted in a check.
@@ -151,18 +154,68 @@ func (p *Parser) parseMovetext(firstToken Token, g *Game) error {
 }
 
 func (p *Parser) parseMove(raw string) (Move, bool) {
-	move := Move{}
+	// The final move we will build and return.
+	var finalMove Move
 
-	// 1. Handle check/mate suffix first
-	if strings.HasSuffix(raw, "+") {
-		move.IsCheck = true
-		raw = strings.TrimSuffix(raw, "+")
-	} else if strings.HasSuffix(raw, "#") {
-		move.IsMate = true
-		raw = strings.TrimSuffix(raw, "#")
+	// Make a mutable copy of the raw string to parse.
+	movetext := raw
+
+	// 1. Parse and strip the promotion FIRST.
+	if i := strings.Index(movetext, "="); i != -1 {
+		// This handles cases like "e8=Q+"
+		promoAndSuffix := movetext[i+1:]
+		if len(promoAndSuffix) == 0 {
+			return Move{}, false // "e8=" is invalid
+		}
+
+		promoChar := rune(promoAndSuffix[0])
+		if piece, ok := PieceSymbols[promoChar]; ok {
+			finalMove.Promotion = piece
+		} else {
+			return Move{}, false // Invalid promotion piece
+		}
+
+		// Check for a suffix *after* the promotion
+		if len(promoAndSuffix) > 1 {
+			suffix := promoAndSuffix[1:]
+			if suffix == "+" {
+				finalMove.IsCheck = true
+			} else if suffix == "#" {
+				finalMove.IsMate = true
+			}
+		}
+
+		movetext = movetext[:i] // "e8"
+	} else {
+		// 2. If no promotion, parse and strip the check/mate suffix.
+		if strings.HasSuffix(movetext, "+") {
+			finalMove.IsCheck = true
+			movetext = strings.TrimSuffix(movetext, "+")
+		} else if strings.HasSuffix(movetext, "#") {
+			finalMove.IsMate = true
+			movetext = strings.TrimSuffix(movetext, "#")
+		}
 	}
 
-	// 2. The last two characters are almost always the destination square.
+	// 3. Parse the core move notation that's left.
+	coreMove, ok := p.parseCoreMove(movetext)
+	if !ok {
+		return Move{}, false
+	}
+
+	// 4. Combine the results.
+	coreMove.IsCheck = finalMove.IsCheck
+	coreMove.IsMate = finalMove.IsMate
+	coreMove.Promotion = finalMove.Promotion
+
+	return coreMove, true
+}
+
+// parseCoreMove handles a move string after any suffixes/promotions have been removed.
+func (p *Parser) parseCoreMove(raw string) (Move, bool) {
+	move := Move{}
+
+	// Destination is always the last 2 chars
 	if len(raw) < 2 {
 		return Move{}, false
 	}
@@ -173,43 +226,62 @@ func (p *Parser) parseMove(raw string) (Move, bool) {
 	}
 	move.To = dest
 
+	// Let's analyze the prefix
 	pre := raw[:len(raw)-2]
 
-	// 3. If pre is empty, it's a pawn move (e.g., "e4")
-	if len(pre) == 0 {
+	switch len(pre) {
+	case 0: // Pawn move, e.g., "e4"
 		move.Piece = Pawn
 		return move, true
-	}
-
-	// 4. Handle piece moves and pawn captures
-	firstChar := rune(pre[0])
-
-	if piece, ok := PieceSymbols[firstChar]; ok {
-		// It's a piece move
-		move.Piece = piece
-		disambStr := pre[1:]
-
-		if strings.Contains(disambStr, "x") {
-			move.IsCapture = true
-			disambStr = strings.Replace(disambStr, "x", "", 1)
+	case 1: // Standard piece move "Nf3" or pawn capture "exd5"
+		firstChar := rune(pre[0])
+		if piece, ok := PieceSymbols[firstChar]; ok { // "Nf3"
+			move.Piece = piece
+			return move, true
+		} else if util.IsFile(firstChar) { // "exd5" requires a capture 'x'
+			// This case is handled by len(pre) == 2, e.g. "ex"
+			return Move{}, false
 		}
+	case 2: // Pawn capture "exd5", disambiguated move "Rdf8", or piece capture "Nxf3"
+		firstChar := rune(pre[0])
+		secondChar := rune(pre[1])
 
-		if len(disambStr) == 1 {
-			char := rune(disambStr[0])
-			if util.IsFile(char) {
-				move.From.File = int(char - 'a')
-			} else if util.IsRank(char) {
-				move.From.Rank = int(char - '1')
-			}
-		}
-
-		return move, true
-	} else if util.IsFile(firstChar) {
-		// It's a pawn capture (e.g., "exd5")
-		if pre == string(firstChar)+"x" {
+		if util.IsFile(firstChar) && secondChar == 'x' { // Pawn capture "exd5"
 			move.Piece = Pawn
 			move.IsCapture = true
 			move.From.File = int(firstChar - 'a')
+			return move, true
+		}
+
+		if piece, ok := PieceSymbols[firstChar]; ok {
+			move.Piece = piece
+			if secondChar == 'x' { // Piece capture "Nxf3"
+				move.IsCapture = true
+			} else if util.IsFile(secondChar) { // Disambiguation "Rdf8"
+				move.From.File = int(secondChar - 'a')
+			} else if util.IsRank(secondChar) { // Disambiguation "N1c3"
+				move.From.Rank = int(secondChar - '1')
+			} else {
+				return Move{}, false
+			}
+			return move, true
+		}
+
+	case 3: // Disambiguated capture, e.g., "Rdxf8"
+		firstChar := rune(pre[0])
+		disambiguationChar := rune(pre[1])
+		captureChar := rune(pre[2])
+
+		if piece, ok := PieceSymbols[firstChar]; ok && captureChar == 'x' {
+			move.Piece = piece
+			move.IsCapture = true
+			if util.IsFile(disambiguationChar) {
+				move.From.File = int(disambiguationChar - 'a')
+			} else if util.IsRank(disambiguationChar) {
+				move.From.Rank = int(disambiguationChar - '1')
+			} else {
+				return Move{}, false
+			}
 			return move, true
 		}
 	}
