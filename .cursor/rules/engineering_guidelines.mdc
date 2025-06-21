@@ -1,0 +1,76 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# ChessNote - Engineering Guidelines
+
+## 1. Philosophy
+
+This document outlines the engineering principles and best practices for the ChessNote project. Our core philosophy is to build a **production-grade, reliable, and performant** Go library that is a joy for developers to use.
+
+Every decision, from API design to testing strategy, should be made with these three pillars in mind. We are not just writing code; we are engineering a component that others will depend on.
+
+## 2. Go Language & Style
+
+- **Idiomatic Go:** All code must be written in an idiomatic Go style. When in doubt, refer to [Effective Go](https://go.dev/doc/effective_go).
+- **Formatting:** All Go code **must** be formatted with `go fmt` before being committed. This is non-negotiable and will be enforced by our CI pipeline.
+- **Linting:** All code must pass `go vet` and our chosen linter's checks without errors.
+
+## 3. Test-Driven Development (TDD)
+
+TDD is not optional; it is the central development practice of this project.
+
+1.  **Red-Green-Refactor:** We will strictly follow the TDD cycle:
+    - **Red:** Write a failing test for the new feature or bug.
+    - **Green:** Write the simplest possible code to make the test pass.
+    - **Refactor:** Clean up and improve the code while ensuring the test still passes.
+2.  **No Feature Without a Test:** Every new feature, no matter how small, must begin with a corresponding test case.
+3.  **Bug Fixes Require Tests:** Every bug fix must start with the creation of a new test that reliably reproduces the bug. This test will fail before the fix and pass after it, preventing future regressions.
+
+## 4. Testing Strategy
+
+We employ a multi-layered testing strategy to ensure correctness and robustness.
+
+- **Unit Tests:** Standard Go tests (`*_test.go`) should be used for testing individual functions and logic. Table-driven tests are preferred for testing multiple inputs and outputs for a single function.
+- **Golden File Testing:** For the parser, we will use the "golden file" pattern.
+  - Test cases are defined in `.pgn` files within a `testdata` directory.
+  - The expected output (AST or error) is stored in a corresponding `.golden.json` file.
+  - The test runner compares the actual output against the golden file.
+  - Golden files will be updated by running the test suite with the `TESTDATA_ACCEPT=1` environment variable.
+- **Fuzz Testing:** For any function that parses complex, untrusted input (especially our core parser), a fuzz test **must** be implemented to ensure the code can handle unexpected input without crashing.
+- **Benchmarks:** Any performance-critical code should be accompanied by benchmarks to track performance and prevent regressions.
+
+## 5. API Design
+
+- **User-First:** Our public API is a product for other developers. It must be clean, discoverable, and well-documented.
+- **Stability:** We will adhere to semantic versioning. The public API of v1.x.x will not contain breaking changes.
+- **Extensibility:** Design APIs to be extensible. For example, use functional options (`ParserOption`) for constructors to allow adding new configuration without breaking changes.
+
+## 6. Error Handling
+
+- **No Panics:** The library code **must not** panic on any user-provided input. Panics should only be used for unrecoverable, programmer-error situations.
+- **Structured Errors:** Errors returned by the parser must be structured, containing information like line and column numbers. They should be of a specific type (e.g., `chessnote.SyntaxError`) so consumers can programmatically inspect them.
+
+## 7. Dependencies
+
+- **Minimize Dependencies:** Strive to use the Go standard library wherever possible.
+- **Justify New Dependencies:** Adding a new third-party dependency requires justification and team review. We must consider its maintenance status, license, and performance overhead.
+
+## 8. Debugging
+
+- **Standard Debuggers:** Standard Go debuggers like Delve are encouraged.
+- **Struct Dumping:** For inspecting complex data structures like our AST during development, the use of `github.com/goforj/godump` is recommended for its clear and detailed output.
+
+## 9. Git & Version Control
+
+- **Main Branch is Always Stable:** The `main` branch must always be in a shippable state, with all tests passing.
+- **Feature Branches:** All new work must be done on feature branches (e.g., `feat/parse-captures`, `fix/off-by-one-error`).
+- **Pull Requests (PRs):** All code must be merged into `main` via a Pull Request.
+- **Code Reviews:** All PRs must be reviewed by at least one other contributor before being merged. The author is responsible for ensuring their PR passes all CI checks.
+
+## 10. Documentation
+
+- **GoDoc is Mandatory:** Every single exported function, type, and field in the public API must have a clear and concise GoDoc comment explaining its purpose.
+- **README is the Entrypoint:** The `README.md` must be kept up-to-date with project status, installation instructions, and a quick-start guide.
+- **Examples:** The `examples/` directory should contain working, self-contained examples of how to use the library to solve common tasks.
