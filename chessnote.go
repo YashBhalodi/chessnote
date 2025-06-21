@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/HexaTech/chessnote/internal/util"
+	"github.com/YashBhalodi/chessnote/internal/util"
 )
 
 // Game represents a single parsed PGN game, including its tag pairs,

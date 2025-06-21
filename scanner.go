@@ -5,7 +5,7 @@ import (
 	"io"
 	"strconv"
 
-	"github.com/HexaTech/chessnote/internal/util"
+	"github.com/YashBhalodi/chessnote/internal/util"
 )
 
 // Scanner is responsible for lexical analysis of a PGN input stream.

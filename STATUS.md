@@ -77,5 +77,5 @@ The primary goal of this milestone is to prepare the library for a stable v1.0.0
 ## Milestone 4: Beta Release & Documentation
 
 - **Goal**: Prepare the library for a public beta release. This includes writing comprehensive documentation, creating examples, and setting up a continuous integration pipeline.
-- **Status**: Not Started
-- **Next Step**: Write a detailed `README.md` that serves as the primary entry point for new users. It should include a project overview, installation instructions, and a quick-start guide.
+- **Status**: In Progress
+- **Next Step**: Create a set of clear, working examples in the `examples/` directory. These should showcase how to use the library to perform common tasks, such as reading a PGN file, iterating through moves, and accessing specific game data.

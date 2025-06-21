@@ -1,3 +1,3 @@
-module github.com/HexaTech/chessnote
+module github.com/YashBhalodi/chessnote
 
-go 1.24.4
+go 1.18

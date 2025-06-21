@@ -3,7 +3,7 @@ package util_test
 import (
 	"testing"
 
-	"github.com/HexaTech/chessnote/internal/util"
+	"github.com/YashBhalodi/chessnote/internal/util"
 )
 
 func TestIsFile(t *testing.T) {

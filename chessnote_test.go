@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/HexaTech/chessnote"
+	"github.com/YashBhalodi/chessnote"
 )
 
 func TestParseTagPairs(t *testing.T) {
