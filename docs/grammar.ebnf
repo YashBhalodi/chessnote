@@ -6,7 +6,7 @@ movetext_section ::= (element | result)*
 element    ::= move_number | move | comment | rav
 move_number::= digit+ "."
 
-move             ::= ( (pawn_capture | piece_capture) | (pawn_move | piece_move) | castling ) check?
+move             ::= ( (pawn_capture | piece_capture) | (pawn_move | piece_move) | castling ) check? nag?
 pawn_move        ::= destination promotion?
 piece_move       ::= piece disambiguation? destination
 pawn_capture     ::= file "x" destination promotion?
@@ -15,6 +15,7 @@ comment          ::= "{" [^}]+ "}" | ";" [^\n]*
 rav              ::= "(" (element | result)+ ")"
 
 check            ::= "+" | "#"
+nag              ::= "$" digit+
 piece            ::= "N" | "B" | "R" | "Q" | "K"
 destination      ::= file rank
 disambiguation   ::= file | rank

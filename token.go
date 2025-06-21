@@ -21,6 +21,7 @@ const (
 	COMMENT // e.g., { A comment }
 	STRING  // e.g., "F/S Return Match"
 	NUMBER  // e.g., 1, 29
+	NAG     // e.g., $1, $10
 
 	// Punctuation
 	LBRACKET // [

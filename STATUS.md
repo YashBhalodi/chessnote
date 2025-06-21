@@ -47,17 +47,27 @@ The primary goal of this milestone is to support the full PGN specification.
 
 - **Comments**: The parser now handles both single-line (`;`) and multi-line (`{...}`) comments by correctly ignoring them.
 - **Recursive Annotation Variations (RAVs)**: The parser now correctly handles nested move lines, e.g., `(1. e5 d5)`. The parser was refactored to use a stateful, recursive descent approach.
+- **Numeric Annotation Glyphs (NAGs)**: The parser now correctly handles NAGs, e.g., `$1`, `$18`, associating them with the preceding move.
 
-#### 2. Immediate Next Step: Numeric Annotation Glyphs (NAGs)
+### Milestone 2 Complete
 
-The next feature to be implemented is handling NAGs.
+With the implementation of NAGs, all major parsing features for the PGN standard are now complete.
 
-- **Task**: Update the parser to handle NAGs, e.g., `$1`, `$2`.
-- **Files to Update**: `chessnote.go`, `chessnote_test.go`, `scanner.go`, `token.go`.
-- **EBNF to Add**: Update grammar to include NAGs.
+---
 
-#### 3. Upcoming Features
+### Next Steps (Milestone 3: Beta Release & Hardening)
 
-Once NAGs are complete, we will proceed with the following features in order:
+The primary goal of this milestone is to prepare the library for a stable v1.0.0 beta release. The focus will shift from adding new features to improving robustness, documentation, and the public API.
 
-- A full review of the parser's semantic validation capabilities.
+#### 1. Immediate Next Step: Final Parser Review & Refinement
+
+- **Task**: Conduct a thorough review of the entire parser and its data structures. Refine the public API, improve GoDoc comments, and ensure all code adheres to our engineering guidelines. This includes a final review of the `parseMove` and `parseCoreMove` functions for clarity and robustness.
+- **Files to Update**: All `*.go` files.
+
+#### 2. Upcoming Tasks
+
+- **Enhanced Error Reporting**: Improve error messages to be more specific and user-friendly, including line and column numbers where possible.
+- **Fuzz Testing**: Implement a comprehensive fuzz testing suite for the parser to ensure it can handle any malformed input without crashing.
+- **Benchmarking**: Add a suite of benchmarks to measure and track the performance of the parser.
+- **Examples**: Create a set of examples in the `examples/` directory to showcase how to use the library.
+- **README Overhaul**: Update the `README.md` to reflect the complete feature set and provide a comprehensive guide for new users.

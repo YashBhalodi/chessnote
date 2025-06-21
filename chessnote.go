@@ -5,6 +5,7 @@ package chessnote
 import (
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	"github.com/HexaTech/chessnote/internal/util"
@@ -48,6 +49,9 @@ type Move struct {
 	// Variations lists any alternative move sequences that could have been
 	// played. This is used for representing Recursive Annotation Variations (RAVs).
 	Variations [][]Move
+	// NAGs is a slice of Numeric Annotation Glyphs (e.g., $1, $2)
+	// associated with the move.
+	NAGs []int
 }
 
 // Square represents a single square on the board (e.g., e4).
@@ -174,6 +178,21 @@ func (p *Parser) parseMovetext(moves *[]Move) error {
 			if ok {
 				*moves = append(*moves, move)
 			}
+			p.scan()
+		case NAG:
+			if len(*moves) == 0 {
+				return fmt.Errorf("found NAG before any moves")
+			}
+			lastMove := &(*moves)[len(*moves)-1]
+			nag, err := strconv.Atoi(p.tok.Literal)
+			if err != nil {
+				// This should not happen if the scanner is correct.
+				return fmt.Errorf("invalid NAG value: %v", p.tok.Literal)
+			}
+			if lastMove.NAGs == nil {
+				lastMove.NAGs = make([]int, 0)
+			}
+			lastMove.NAGs = append(lastMove.NAGs, nag)
 			p.scan()
 		case NUMBER, DOT, COMMENT:
 			p.scan() // Ignore

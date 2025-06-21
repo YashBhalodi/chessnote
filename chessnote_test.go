@@ -247,6 +247,31 @@ func TestParseWithRAV(t *testing.T) {
 	}
 }
 
+func TestParseWithNAGs(t *testing.T) {
+	t.Parallel()
+	pgn := `1. e4 $1 1... e5 $2 $18 *`
+	game, err := chessnote.ParseString(pgn)
+	if err != nil {
+		t.Fatalf("ParseString() failed: %v", err)
+	}
+
+	if len(game.Moves) != 2 {
+		t.Fatalf("expected 2 moves, got %d", len(game.Moves))
+	}
+
+	move1 := game.Moves[0]
+	want1 := []int{1}
+	if !reflect.DeepEqual(move1.NAGs, want1) {
+		t.Errorf("move 1: got NAGs %v, want %v", move1.NAGs, want1)
+	}
+
+	move2 := game.Moves[1]
+	want2 := []int{2, 18}
+	if !reflect.DeepEqual(move2.NAGs, want2) {
+		t.Errorf("move 2: got NAGs %v, want %v", move2.NAGs, want2)
+	}
+}
+
 // newSquare is an unexported function, so we test it here in the same package.
 func TestNewSquare(t *testing.T) {
 	t.Parallel()

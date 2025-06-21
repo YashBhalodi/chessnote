@@ -51,6 +51,8 @@ func (s *Scanner) Scan() Token {
 		return s.scanCommentBlock()
 	case ';':
 		return s.scanCommentLine()
+	case '$':
+		return s.scanNAG()
 	}
 
 	return Token{Type: ILLEGAL, Literal: string(r)}
@@ -125,6 +127,19 @@ func (s *Scanner) scanCommentLine() Token {
 		lit += string(r)
 	}
 	return Token{Type: COMMENT, Literal: lit}
+}
+
+func (s *Scanner) scanNAG() Token {
+	var lit string
+	for {
+		r := s.read()
+		if !util.IsDigit(r) {
+			s.unread()
+			break
+		}
+		lit += string(r)
+	}
+	return Token{Type: NAG, Literal: lit}
 }
 
 func (s *Scanner) read() rune {
