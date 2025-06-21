@@ -213,3 +213,84 @@ func TestParseCheckmate(t *testing.T) {
 		t.Errorf("Parse() got = %+v, want %+v", game.Moves, want)
 	}
 }
+
+func TestParseDisambiguation(t *testing.T) {
+	t.Parallel()
+	testCases := []struct {
+		name string
+		pgn  string
+		want chessnote.Move
+	}{
+		{
+			name: "file disambiguation",
+			pgn:  "1. Rdf8 *",
+			want: chessnote.Move{
+				Piece: chessnote.Rook,
+				From:  chessnote.Square{File: 3},          // 'd' file
+				To:    chessnote.Square{File: 5, Rank: 7}, // f8
+			},
+		},
+		{
+			name: "rank disambiguation",
+			pgn:  "1. N1c3 *",
+			want: chessnote.Move{
+				Piece: chessnote.Knight,
+				From:  chessnote.Square{Rank: 0},          // '1' rank
+				To:    chessnote.Square{File: 2, Rank: 2}, // c3
+			},
+		},
+		{
+			name: "file disambiguation with capture",
+			pgn:  "1. Rdxf8 *",
+			want: chessnote.Move{
+				Piece:     chessnote.Rook,
+				From:      chessnote.Square{File: 3},          // 'd' file
+				To:        chessnote.Square{File: 5, Rank: 7}, // f8
+				IsCapture: true,
+			},
+		},
+		{
+			name: "rank disambiguation with capture",
+			pgn:  "1. N1xc3 *",
+			want: chessnote.Move{
+				Piece:     chessnote.Knight,
+				From:      chessnote.Square{Rank: 0},          // '1' rank
+				To:        chessnote.Square{File: 2, Rank: 2}, // c3
+				IsCapture: true,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			game, err := chessnote.ParseString(tc.pgn)
+			if err != nil {
+				t.Fatalf("Parse() error = %v", err)
+			}
+			if len(game.Moves) != 1 {
+				t.Fatalf("expected 1 move, got %d", len(game.Moves))
+			}
+
+			got := game.Moves[0]
+
+			// Custom comparison to ignore ambiguous parts of From square
+			if got.Piece != tc.want.Piece ||
+				got.To != tc.want.To ||
+				got.IsCapture != tc.want.IsCapture {
+				t.Errorf("Parse() got basic fields = %+v, want %+v", got, tc.want)
+			}
+
+			// a bit verbose, but clear.
+			switch tc.name {
+			case "file disambiguation", "file disambiguation with capture":
+				if got.From.File != tc.want.From.File {
+					t.Errorf("Parse() got From.File = %d, want %d", got.From.File, tc.want.From.File)
+				}
+			case "rank disambiguation", "rank disambiguation with capture":
+				if got.From.Rank != tc.want.From.Rank {
+					t.Errorf("Parse() got From.Rank = %d, want %d", got.From.Rank, tc.want.From.Rank)
+				}
+			}
+		})
+	}
+}

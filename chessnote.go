@@ -153,7 +153,7 @@ func (p *Parser) parseMovetext(firstToken Token, g *Game) error {
 func (p *Parser) parseMove(raw string) (Move, bool) {
 	move := Move{}
 
-	// Check for check/mate suffix
+	// 1. Handle check/mate suffix first
 	if strings.HasSuffix(raw, "+") {
 		move.IsCheck = true
 		raw = strings.TrimSuffix(raw, "+")
@@ -162,46 +162,56 @@ func (p *Parser) parseMove(raw string) (Move, bool) {
 		raw = strings.TrimSuffix(raw, "#")
 	}
 
-	// Pawn captures like "exd5"
-	if len(raw) == 4 && raw[1] == 'x' {
-		// This could be a piece or a pawn capture. Check if the first char is a file.
-		if util.IsFile(rune(raw[0])) {
-			if dest, ok := newSquare(raw[2:]); ok {
-				move.Piece = Pawn
-				move.IsCapture = true
-				move.From = Square{File: int(raw[0] - 'a')}
-				move.To = dest
-				return move, true
-			}
-		}
-
-		// Piece captures like "Nxf3"
-		if piece, ok := PieceSymbols[rune(raw[0])]; ok {
-			if dest, ok := newSquare(raw[2:]); ok {
-				move.Piece = piece
-				move.IsCapture = true
-				move.To = dest
-				return move, true
-			}
-		}
+	// 2. The last two characters are almost always the destination square.
+	if len(raw) < 2 {
+		return Move{}, false
 	}
-
-	// Piece moves like "Nf3"
-	if len(raw) == 3 {
-		if piece, ok := PieceSymbols[rune(raw[0])]; ok {
-			if dest, ok := newSquare(raw[1:]); ok {
-				move.Piece = piece
-				move.To = dest
-				return move, true
-			}
-		}
+	destStr := raw[len(raw)-2:]
+	dest, ok := newSquare(destStr)
+	if !ok {
+		return Move{}, false
 	}
+	move.To = dest
 
-	// Pawn moves like "e4"
-	if dest, ok := newSquare(raw); ok {
+	pre := raw[:len(raw)-2]
+
+	// 3. If pre is empty, it's a pawn move (e.g., "e4")
+	if len(pre) == 0 {
 		move.Piece = Pawn
-		move.To = dest
 		return move, true
+	}
+
+	// 4. Handle piece moves and pawn captures
+	firstChar := rune(pre[0])
+
+	if piece, ok := PieceSymbols[firstChar]; ok {
+		// It's a piece move
+		move.Piece = piece
+		disambStr := pre[1:]
+
+		if strings.Contains(disambStr, "x") {
+			move.IsCapture = true
+			disambStr = strings.Replace(disambStr, "x", "", 1)
+		}
+
+		if len(disambStr) == 1 {
+			char := rune(disambStr[0])
+			if util.IsFile(char) {
+				move.From.File = int(char - 'a')
+			} else if util.IsRank(char) {
+				move.From.Rank = int(char - '1')
+			}
+		}
+
+		return move, true
+	} else if util.IsFile(firstChar) {
+		// It's a pawn capture (e.g., "exd5")
+		if pre == string(firstChar)+"x" {
+			move.Piece = Pawn
+			move.IsCapture = true
+			move.From.File = int(firstChar - 'a')
+			return move, true
+		}
 	}
 
 	return Move{}, false

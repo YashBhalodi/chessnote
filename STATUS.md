@@ -29,25 +29,28 @@ We have successfully **completed Milestone 1** and are now beginning **Milestone
   - The parser has been refactored to use a `Scanner` for efficient tokenization.
   - Common logic has been centralized into an `internal/util` package with its own tests.
 
+### Completed Features (Milestone 2)
+
+- **Move Disambiguation**: The parser now correctly handles moves with file or rank disambiguation (e.g., `Rdf8`, `N1c3`), including captures.
+
 ---
 
 ### Next Steps (Milestone 2)
 
 The primary goal of this milestone is to support the full PGN specification.
 
-#### 1. Immediate Next Step: Move Disambiguation
+#### 1. Immediate Next Step: Pawn Promotion
 
-The next feature to be implemented is handling moves that require disambiguation.
+The next feature to be implemented is handling pawn promotion.
 
-- **Task**: Update the parser to handle movetext like `Rdf8` (specifying the 'd' file for the Rook) or `N1c3` (specifying the '1' rank for the Knight).
+- **Task**: Update the parser to handle movetext like `e8=Q`.
 - **Files to Update**: `chessnote.go`, `chessnote_test.go`.
-- **EBNF to Add**: Update `move` in `grammar.ebnf` to include optional rank/file specifiers.
+- **EBNF to Add**: Update `move` in `grammar.ebnf` to include promotion syntax.
 
 #### 2. Upcoming Features
 
 Once disambiguation is complete, we will proceed with the following features in order:
 
-- **Pawn Promotion**: Parsing moves like `e8=Q`.
 - **Castling**: Parsing both kingside (`O-O`) and queenside (`O-O-O`) castling.
 - **Comments**: Handling both single-line (`;`) and multi-line (`{...}`) comments.
 - **Recursive Annotation Variations (RAVs)**: Parsing nested move lines, e.g., `(1. e5 d5)`.
