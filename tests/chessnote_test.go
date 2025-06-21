@@ -272,7 +272,6 @@ func TestParseWithNAGs(t *testing.T) {
 	}
 }
 
-// newSquare is an unexported function, so we test it here in the same package.
 func TestNewSquare(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
@@ -294,23 +293,22 @@ func TestNewSquare(t *testing.T) {
 			// if it were needed, or keep it tested implicitly via the parser.
 			// For this case, direct testing is clearer.
 			// We can't call chessnote.newSquare directly, so we parse a move.
-			game, err := chessnote.ParseString(tt.s)
-			if err != nil && tt.wantOk {
-				t.Fatalf("ParseString() error = %v", err)
-			}
-
-			var got chessnote.Square
-			var gotOk bool
-			if game != nil && len(game.Moves) == 1 {
-				got = game.Moves[0].To
-				gotOk = true
-			}
-
-			if gotOk != tt.wantOk {
-				t.Fatalf("newSquare() ok = %v, want %v", gotOk, tt.wantOk)
-			}
-			if gotOk && !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newSquare() got = %v, want %v", got, tt.want)
+			game, err := chessnote.ParseString(tt.s + " *")
+			if tt.wantOk {
+				if err != nil {
+					t.Fatalf("ParseString() error = %v", err)
+				}
+				if len(game.Moves) == 0 {
+					t.Fatalf("ParseString() produced no moves")
+				}
+				got := game.Moves[0].To
+				if !reflect.DeepEqual(got, tt.want) {
+					t.Errorf("Parse() got = %+v, want %+v", got, tt.want)
+				}
+			} else {
+				if err == nil {
+					t.Errorf("ParseString() expected an error, but got none")
+				}
 			}
 		})
 	}

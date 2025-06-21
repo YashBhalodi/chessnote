@@ -123,6 +123,11 @@ func (p *Parser) Parse() (*Game, error) {
 		case scanner.EOF:
 			return game, nil
 		case scanner.LBRACKET:
+			// If we are already parsing moves and see a new tag, the game has ended
+			// without a result marker.
+			if len(game.Moves) > 0 {
+				return game, nil
+			}
 			if err := p.parseTagPair(game); err != nil {
 				return nil, err
 			}
@@ -169,7 +174,7 @@ func (p *Parser) parseTagPair(g *Game) error {
 func (p *Parser) parseMovetext(moves *[]Move) error {
 	for {
 		switch p.tok.Type {
-		case scanner.EOF, scanner.ASTERISK, scanner.RPAREN:
+		case scanner.EOF, scanner.ASTERISK, scanner.RPAREN, scanner.LBRACKET:
 			return nil // Let caller handle termination
 		case scanner.IDENT:
 			if isResult(p.tok) {
@@ -428,6 +433,9 @@ func newSquare(s string) (Square, bool) {
 // For parsing from files or network streams, creating a Parser with NewParser
 // is recommended.
 func ParseString(s string) (*Game, error) {
+	// Trim the UTF-8 Byte Order Mark (BOM) if it exists. Some PGN files
+	// may contain this, which can cause parsing to fail.
+	s = strings.TrimPrefix(s, "\uFEFF")
 	p := NewParser(strings.NewReader(s))
 	return p.Parse()
 }
