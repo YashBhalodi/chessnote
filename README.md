@@ -14,7 +14,7 @@ In a world of hobbyist libraries, ChessNote is engineered for professional use. 
 
 *   **Rock-Solid Reliability:** Built with a strict **Test-Driven Development (TDD)** methodology, ChessNote boasts comprehensive test coverage. Every feature, from simple pawn moves to complex variations, is verified. The parser is designed to handle real-world, messy PGNs without panicking, returning structured errors that make debugging a breeze.
 
-*   **Blazing-Fast Performance:** Written in pure, idiomatic Go, ChessNote is designed for speed. It minimizes allocations and uses an efficient scanning and parsing model to handle large PGN databases with ease. (Benchmarks forthcoming).
+*   **Blazing-Fast Performance:** Written in pure, idiomatic Go, ChessNote is designed for speed. It minimizes allocations and uses an efficient scanning and parsing model to handle large PGN databases with ease. Its performance is validated by a comprehensive benchmark suite (see the `benchmarks/` directory).
 
 *   **A Developer-First API:** The public API is clean, discoverable, and a joy to use. We believe developers should spend their time building great applications, not fighting with a clunky parser. Our data structures (`Game`, `Move`, `Square`) are intuitive and well-documented.
 
@@ -118,6 +118,10 @@ go run .
 ## Project Philosophy
 
 This project adheres to a strict set of engineering guidelines focused on creating professional, enterprise-grade software. We practice **Test-Driven Development (TDD)**, maintain a comprehensive test suite, and prioritize a clean, stable, and well-documented public API.
+
+## Technical Documentation
+
+For a deep dive into the parser's architecture, execution flow, and design decisions, please see our comprehensive **[Technical Documentation](./docs/README.md)**. This is the best resource for developers looking to contribute to the project or understand its inner workings.
 
 ## Roadmap & Contributing
 
