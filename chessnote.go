@@ -174,11 +174,11 @@ func (p *Parser) parseMovetext(moves *[]Move) error {
 			if isResult(p.tok) {
 				return nil // Let caller handle result
 			}
-			move, ok := p.parseMove(p.tok.Literal)
-			if ok {
-				*moves = append(*moves, move)
+			move, err := p.parseMove()
+			if err != nil {
+				return err
 			}
-			p.scan()
+			*moves = append(*moves, move)
 		case NAG:
 			if len(*moves) == 0 {
 				return fmt.Errorf("found NAG before any moves")
@@ -239,7 +239,20 @@ func isResult(tok Token) bool {
 	return false
 }
 
-func (p *Parser) parseMove(raw string) (Move, bool) {
+func (p *Parser) parseMove() (Move, error) {
+	raw := p.tok.Literal
+	move, ok := p.parseMoveFromRaw(raw)
+	if !ok {
+		return Move{}, fmt.Errorf("invalid move: %s", raw)
+	}
+
+	p.scan() // Consume the move token.
+	return move, nil
+}
+
+// parseMoveFromRaw is the old implementation that works on a string.
+// We will phase this out.
+func (p *Parser) parseMoveFromRaw(raw string) (Move, bool) {
 	// The final move we will build and return.
 	var finalMove Move
 

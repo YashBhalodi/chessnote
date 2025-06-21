@@ -301,7 +301,7 @@ func TestNewSquare(t *testing.T) {
 
 			var got chessnote.Square
 			var gotOk bool
-			if len(game.Moves) == 1 {
+			if game != nil && len(game.Moves) == 1 {
 				got = game.Moves[0].To
 				gotOk = true
 			}

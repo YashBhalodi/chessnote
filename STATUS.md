@@ -71,3 +71,11 @@ The primary goal of this milestone is to prepare the library for a stable v1.0.0
 - **Benchmarking**: Add a suite of benchmarks to measure and track the performance of the parser.
 - **Examples**: Create a set of examples in the `examples/` directory to showcase how to use the library.
 - **README Overhaul**: Update the `README.md` to reflect the complete feature set and provide a comprehensive guide for new users.
+
+---
+
+## Milestone 4: Beta Release & Documentation
+
+- **Goal**: Prepare the library for a public beta release. This includes writing comprehensive documentation, creating examples, and setting up a continuous integration pipeline.
+- **Status**: Not Started
+- **Next Step**: Write a detailed `README.md` that serves as the primary entry point for new users. It should include a project overview, installation instructions, and a quick-start guide.
