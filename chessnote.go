@@ -149,31 +149,37 @@ func (p *Parser) parseMovetext(firstToken Token, g *Game) error {
 }
 
 func (p *Parser) parseMove(raw string) (Move, bool) {
+	move := Move{}
+
+	// Check for check/mate suffix
+	if strings.HasSuffix(raw, "+") {
+		move.IsCheck = true
+		raw = strings.TrimSuffix(raw, "+")
+	} else if strings.HasSuffix(raw, "#") {
+		move.IsMate = true
+		raw = strings.TrimSuffix(raw, "#")
+	}
+
 	// Pawn captures like "exd5"
 	if len(raw) == 4 && raw[1] == 'x' {
 		// This could be a piece or a pawn capture. Check if the first char is a file.
 		if util.IsFile(rune(raw[0])) {
 			if dest, ok := newSquare(raw[2:]); ok {
-				return Move{
-					Piece:     Pawn,
-					IsCapture: true,
-					From: Square{
-						File: int(raw[0] - 'a'),
-						// Rank is unknown from this notation
-					},
-					To: dest,
-				}, true
+				move.Piece = Pawn
+				move.IsCapture = true
+				move.From = Square{File: int(raw[0] - 'a')}
+				move.To = dest
+				return move, true
 			}
 		}
 
 		// Piece captures like "Nxf3"
 		if piece, ok := PieceSymbols[rune(raw[0])]; ok {
 			if dest, ok := newSquare(raw[2:]); ok {
-				return Move{
-					Piece:     piece,
-					IsCapture: true,
-					To:        dest,
-				}, true
+				move.Piece = piece
+				move.IsCapture = true
+				move.To = dest
+				return move, true
 			}
 		}
 	}
@@ -182,20 +188,18 @@ func (p *Parser) parseMove(raw string) (Move, bool) {
 	if len(raw) == 3 {
 		if piece, ok := PieceSymbols[rune(raw[0])]; ok {
 			if dest, ok := newSquare(raw[1:]); ok {
-				return Move{
-					Piece: piece,
-					To:    dest,
-				}, true
+				move.Piece = piece
+				move.To = dest
+				return move, true
 			}
 		}
 	}
 
 	// Pawn moves like "e4"
 	if dest, ok := newSquare(raw); ok {
-		return Move{
-			Piece: Pawn,
-			To:    dest,
-		}, true
+		move.Piece = Pawn
+		move.To = dest
+		return move, true
 	}
 
 	return Move{}, false

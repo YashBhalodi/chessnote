@@ -171,3 +171,45 @@ func TestNewSquare(t *testing.T) {
 		})
 	}
 }
+
+func TestParseCheck(t *testing.T) {
+	t.Parallel()
+	pgn := `1. e4+ *`
+	game, err := chessnote.ParseString(pgn)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	want := []chessnote.Move{
+		{
+			Piece:   chessnote.Pawn,
+			To:      chessnote.Square{File: 4, Rank: 3}, // e4
+			IsCheck: true,
+		},
+	}
+
+	if !reflect.DeepEqual(game.Moves, want) {
+		t.Errorf("Parse() got = %+v, want %+v", game.Moves, want)
+	}
+}
+
+func TestParseCheckmate(t *testing.T) {
+	t.Parallel()
+	pgn := `1. e4# *`
+	game, err := chessnote.ParseString(pgn)
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	want := []chessnote.Move{
+		{
+			Piece:  chessnote.Pawn,
+			To:     chessnote.Square{File: 4, Rank: 3}, // e4
+			IsMate: true,
+		},
+	}
+
+	if !reflect.DeepEqual(game.Moves, want) {
+		t.Errorf("Parse() got = %+v, want %+v", game.Moves, want)
+	}
+}
