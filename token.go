@@ -17,7 +17,7 @@ const (
 	EOF                      // End of file
 
 	// Literals
-	IDENT  // e.g., Event, White, Nf3, e4
+	IDENT  // e.g., Event, White, Nf3, e4, Nxf3+
 	STRING // e.g., "F/S Return Match"
 	NUMBER // e.g., 1, 29
 

@@ -34,17 +34,25 @@ func main() {
 [White "Fischer, Robert J."]
 [Black "Spassky, Boris V."]
 [Result "1/2-1/2"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5+ *
 `
 
-	p := chessnote.NewParser()
-	game, err := p.ParseString(pgn)
+	game, err := chessnote.ParseString(pgn)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println("Parsed Tags:")
+	fmt.Println("Tags:")
 	for key, value := range game.Tags {
 		fmt.Printf("  %s: %s\n", key, value)
+	}
+
+	fmt.Println("\nMoves:")
+	for i, move := range game.Moves {
+		// This is a simplified representation of the move.
+		// A real application would have a more sophisticated move formatter.
+		fmt.Printf("  %d: %+v\n", i+1, move)
 	}
 }
 ```

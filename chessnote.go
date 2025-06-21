@@ -1,3 +1,5 @@
+// Package chessnote provides a high-performance, production-grade Go library
+// for parsing Portable Game Notation (PGN), the universal standard for chess game data.
 package chessnote
 
 import (
@@ -75,7 +77,7 @@ func NewParser(r io.Reader) *Parser {
 }
 
 // Parse reads PGN data from an io.Reader, parses it, and returns a Game object.
-// It processes the tag pairs and will be extended to parse the full movetext.
+// It processes tag pairs and the core movetext, including moves, captures, and checks.
 func (p *Parser) Parse() (*Game, error) {
 	game := &Game{
 		Tags: make(map[string]string),
