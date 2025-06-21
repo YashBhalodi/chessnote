@@ -30,6 +30,7 @@ We have successfully **completed Milestone 1** and are now beginning **Milestone
   - Common logic has been centralized into an `internal/util` package with its own tests.
 - **Move Disambiguation**: The parser now handles movetext like `Rdf8` and `N1c3`.
 - **Pawn Promotion**: The parser now handles movetext like `e8=Q` and `exd8=R+`.
+- **Castling**: The parser now handles both kingside (`O-O`) and queenside (`O-O-O`) castling.
 
 ---
 
@@ -37,18 +38,17 @@ We have successfully **completed Milestone 1** and are now beginning **Milestone
 
 The primary goal of this milestone is to support the full PGN specification.
 
-#### 1. Immediate Next Step: Castling
+#### 1. Immediate Next Step: Comments
 
-The next feature to be implemented is handling castling.
+The next feature to be implemented is handling comments.
 
-- **Task**: Update the parser to handle both kingside (`O-O`) and queenside (`O-O-O`) castling.
-- **Files to Update**: `chessnote.go`, `chessnote_test.go`, `scanner.go`.
-- **EBNF to Add**: Update `move` in `grammar.ebnf` to include castling notation.
+- **Task**: Update the parser to handle both single-line (`;`) and multi-line (`{...}`) comments.
+- **Files to Update**: `chessnote.go`, `chessnote_test.go`, `scanner.go`, `token.go`.
+- **EBNF to Add**: Update grammar to include comments.
 
 #### 2. Upcoming Features
 
-Once castling is complete, we will proceed with the following features in order:
+Once comments are complete, we will proceed with the following features in order:
 
-- **Comments**: Handling both single-line (`;`) and multi-line (`{...}`) comments.
 - **Recursive Annotation Variations (RAVs)**: Parsing nested move lines, e.g., `(1. e5 d5)`.
 - **Numeric Annotation Glyphs (NAGs)**: Parsing annotations like `$1`, `$2`, etc. 

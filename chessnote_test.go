@@ -361,3 +361,55 @@ func TestParsePromotion(t *testing.T) {
 		})
 	}
 }
+
+func TestParseCastling(t *testing.T) {
+	t.Parallel()
+	testCases := []struct {
+		name string
+		pgn  string
+		want chessnote.Move
+	}{
+		{
+			name: "kingside castle",
+			pgn:  "1. O-O *",
+			want: chessnote.Move{
+				Piece:            chessnote.King,
+				IsKingsideCastle: true,
+			},
+		},
+		{
+			name: "queenside castle",
+			pgn:  "1. O-O-O *",
+			want: chessnote.Move{
+				Piece:             chessnote.King,
+				IsQueensideCastle: true,
+			},
+		},
+		{
+			name: "kingside castle with check",
+			pgn:  "1. O-O+ *",
+			want: chessnote.Move{
+				Piece:            chessnote.King,
+				IsKingsideCastle: true,
+				IsCheck:          true,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			game, err := chessnote.ParseString(tc.pgn)
+			if err != nil {
+				t.Fatalf("Parse() error = %v", err)
+			}
+			if len(game.Moves) != 1 {
+				t.Fatalf("expected 1 move, got %d", len(game.Moves))
+			}
+			got := game.Moves[0]
+
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("Parse() got = %+v, want %+v", got, tc.want)
+			}
+		})
+	}
+}

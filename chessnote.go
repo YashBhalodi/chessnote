@@ -38,6 +38,10 @@ type Move struct {
 	IsCheck bool
 	// IsMate indicates whether the move resulted in a checkmate.
 	IsMate bool
+	// IsKingsideCastle indicates a kingside castling move (O-O).
+	IsKingsideCastle bool
+	// IsQueensideCastle indicates a queenside castling move (O-O-O).
+	IsQueensideCastle bool
 }
 
 // Square represents a single square on the board (e.g., e4).
@@ -178,9 +182,10 @@ func (p *Parser) parseMove(raw string) (Move, bool) {
 		// Check for a suffix *after* the promotion
 		if len(promoAndSuffix) > 1 {
 			suffix := promoAndSuffix[1:]
-			if suffix == "+" {
+			switch suffix {
+			case "+":
 				finalMove.IsCheck = true
-			} else if suffix == "#" {
+			case "#":
 				finalMove.IsMate = true
 			}
 		}
@@ -198,7 +203,23 @@ func (p *Parser) parseMove(raw string) (Move, bool) {
 	}
 
 	// 3. Parse the core move notation that's left.
-	coreMove, ok := p.parseCoreMove(movetext)
+	var coreMove Move
+	var ok bool
+
+	switch movetext {
+	case "O-O":
+		coreMove.Piece = King
+		coreMove.IsKingsideCastle = true
+		ok = true
+	case "O-O-O":
+		coreMove.Piece = King
+		coreMove.IsQueensideCastle = true
+		ok = true
+	default:
+		// If not castling, parse as a regular move.
+		coreMove, ok = p.parseCoreMove(movetext)
+	}
+
 	if !ok {
 		return Move{}, false
 	}
@@ -207,7 +228,6 @@ func (p *Parser) parseMove(raw string) (Move, bool) {
 	coreMove.IsCheck = finalMove.IsCheck
 	coreMove.IsMate = finalMove.IsMate
 	coreMove.Promotion = finalMove.Promotion
-
 	return coreMove, true
 }
 

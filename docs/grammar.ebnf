@@ -6,7 +6,7 @@ movetext_section ::= (element | result)*
 element    ::= move_number | move
 move_number::= digit+ "."
 
-move             ::= ( (pawn_capture | piece_capture) | (pawn_move | piece_move) ) check?
+move             ::= ( (pawn_capture | piece_capture) | (pawn_move | piece_move) | castling ) check?
 pawn_move        ::= destination promotion?
 piece_move       ::= piece disambiguation? destination
 pawn_capture     ::= file "x" destination promotion?
@@ -17,6 +17,7 @@ piece            ::= "N" | "B" | "R" | "Q" | "K"
 destination      ::= file rank
 disambiguation   ::= file | rank
 promotion        ::= "=" piece
+castling         ::= "O-O" | "O-O-O"
 file             ::= "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h"
 rank             ::= "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8"
 result           ::= "*" | "1-0" | "0-1" | "1/2-1/2"
