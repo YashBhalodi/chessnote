@@ -31,20 +31,17 @@ We have successfully **completed Milestone 1** and are now beginning **Milestone
 - **Move Disambiguation**: The parser now handles movetext like `Rdf8` and `N1c3`.
 - **Pawn Promotion**: The parser now handles movetext like `e8=Q` and `exd8=R+`.
 - **Castling**: The parser now handles both kingside (`O-O`) and queenside (`O-O-O`) castling.
+- **Code Health & Refactoring**: Completed a comprehensive cleanup phase which included:
+  - Consolidation of all move-parsing tests into a single table-driven test.
+  - Refactoring of the core move parser for robustness and clarity.
+  - Hardening of the scanner tests.
+  - A full review and update of all GoDoc comments and documentation.
 
 ---
 
-### Next Steps: Refactoring & Cleanup
+### Next Steps (Milestone 2)
 
-The project is currently in a dedicated refactoring and cleanup phase to improve code quality, maintainability, and robustness before proceeding with new features.
-
-- **Tasks**:
-  - Consolidate all move-parsing tests into a single, comprehensive table-driven test.
-  - Refactor the `parseCoreMove` function for clarity and robustness.
-  - Add more test cases to the `scanner_test.go` to cover all valid identifier characters.
-  - Review and update all GoDoc comments and project documentation (`README.md`, EBNF grammar).
-
-Once this cleanup phase is complete, we will proceed with implementing comments.
+The primary goal of this milestone is to support the full PGN specification.
 
 #### 1. Immediate Next Step: Comments
 
