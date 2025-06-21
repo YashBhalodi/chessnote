@@ -68,6 +68,7 @@ We employ a multi-layered testing strategy to ensure correctness and robustness.
 - **Feature Branches:** All new work must be done on feature branches (e.g., `feat/parse-captures`, `fix/off-by-one-error`).
 - **Pull Requests (PRs):** All code must be merged into `main` via a Pull Request.
 - **Code Reviews:** All PRs must be reviewed by at least one other contributor before being merged. The author is responsible for ensuring their PR passes all CI checks.
+- **Update the STATUS.md file**: Before every commit, you must update the STATUS.md file to reflect the work you have done and what the new "next step" is. Changes to STATUS.md must be included in the corresponding commit. This ensures all team members have a real-time, version-controlled view of the project's progress.
 
 ## 10. Documentation
 
