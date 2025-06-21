@@ -103,7 +103,11 @@ The primary goal of this milestone is to elevate the library to a true productio
 
 ---
 
+### Housekeeping & DX
+
+- **Project Structure**: Reorganized the project to have dedicated `tests/` and `benchmarks/` directories, cleaning up the root.
+- **Examples**: Added a new, runnable example in `examples/multiple-game-pgn/` to demonstrate how to use the `SplitMultiGame` utility.
+
 ### Future Milestones
 
-- **`chessnote` CLI**: A command-line tool for validating and analyzing PGN files.
-- **GIF Renderer**: A tool to generate animated GIFs of chess games.
+- **`chessnote`

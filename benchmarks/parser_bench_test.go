@@ -40,7 +40,7 @@ func BenchmarkParseFischerPetrosian(b *testing.B) {
 }
 
 func BenchmarkParseKasparovGames(b *testing.B) {
-	pgn, err := os.ReadFile("../examples/Kasparov.pgn")
+	pgn, err := os.ReadFile("../examples/multiple-game-pgn/Kasparov.pgn")
 	if err != nil {
 		b.Fatalf("failed to read PGN file: %v", err)
 	}
