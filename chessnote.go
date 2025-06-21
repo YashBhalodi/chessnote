@@ -59,9 +59,16 @@ func (p *Parser) Parse(r io.Reader) (*Game, error) {
 		Tags: make(map[string]string),
 	}
 	scanner := bufio.NewScanner(r)
+	inMovetext := false
+
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
-		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
+		if line == "" {
+			continue // Skip empty lines
+		}
+
+		// Try to parse as a tag pair first
+		if !inMovetext && strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
 			line = strings.TrimPrefix(line, "[")
 			line = strings.TrimSuffix(line, "]")
 			parts := strings.SplitN(line, " ", 2)
@@ -69,6 +76,22 @@ func (p *Parser) Parse(r io.Reader) (*Game, error) {
 				key := parts[0]
 				value := strings.Trim(parts[1], "\"")
 				game.Tags[key] = value
+				continue // Successfully parsed a tag, move to the next line
+			}
+		}
+
+		// If it's not a tag pair, it must be movetext from here on out.
+		inMovetext = true
+		tokens := strings.Fields(line)
+		for _, token := range tokens {
+			if len(token) == 2 && token[0] >= 'a' && token[0] <= 'h' && token[1] >= '1' && token[1] <= '8' {
+				move := Move{
+					To: Square{
+						File: int(token[0] - 'a'),
+						Rank: int(token[1] - '1'),
+					},
+				}
+				game.Moves = append(game.Moves, move)
 			}
 		}
 	}
@@ -79,4 +102,4 @@ func (p *Parser) Parse(r io.Reader) (*Game, error) {
 // It wraps the input string in a strings.Reader and calls Parse.
 func (p *Parser) ParseString(s string) (*Game, error) {
 	return p.Parse(strings.NewReader(s))
-} 
+}
