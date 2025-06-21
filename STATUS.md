@@ -78,4 +78,8 @@ The primary goal of this milestone is to prepare the library for a stable v1.0.0
 
 - **Goal**: Prepare the library for a public beta release. This includes writing comprehensive documentation, creating examples, and setting up a continuous integration pipeline.
 - **Status**: In Progress
-- **Next Step**: Create a set of clear, working examples in the `examples/` directory. These should showcase how to use the library to perform common tasks, such as reading a PGN file, iterating through moves, and accessing specific game data.
+- **Next Step**: Create a more advanced example that demonstrates iterating through all moves, including variations (RAVs), and printing them in a structured way.
+
+### Completed Tasks
+- **Basic Parser Example**: Created a standalone, runnable example that parses a local PGN file.
+- **README Overhaul**: Update the `README.md` to reflect the complete feature set and provide a comprehensive guide for new users. (Done)

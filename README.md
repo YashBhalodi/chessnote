@@ -88,6 +88,23 @@ func main() {
 }
 ```
 
+## Running the Examples
+
+The `examples/` directory contains standalone, runnable programs to showcase the library's features.
+
+To run the basic parsing example:
+
+```sh
+# Navigate to the example directory
+cd examples/basic_parser
+
+# Run the program. It will parse the included 'opera_game.pgn' by default.
+go run .
+
+# You can also point it to your own PGN file
+go run . --pgn_file=/path/to/your/game.pgn
+```
+
 ## Project Philosophy
 
 This project adheres to a strict set of [engineering guidelines](./docs/engineering_guidelines.md) focused on creating professional, enterprise-grade software. We practice **Test-Driven Development (TDD)**, maintain a comprehensive test suite, and prioritize a clean, stable, and well-documented public API.
