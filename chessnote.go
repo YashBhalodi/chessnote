@@ -359,38 +359,10 @@ func (p *Parser) parseCoreMove(raw string) (Move, bool) {
 	move.To = dest
 	movetext = movetext[:len(movetext)-2] // a.k.a 'prefix'
 
-	// Identify the piece type. Defaults to Pawn for moves like "e4".
-	move.Piece = Pawn
-	if len(movetext) > 0 {
-		if piece, ok := PieceSymbols[rune(movetext[0])]; ok {
-			move.Piece = piece
-			movetext = movetext[1:]
-		}
-	}
-
-	// The remainder of movetext can be a disambiguation, a capture, or both.
-	// PGN standard is: [piece][disambiguation][capture][dest]
-	// So we parse disambiguation first.
-
-	// Check for disambiguation, e.g. the 'd' in "Rdf8" or '1' in "N1c3"
-	if len(movetext) > 0 {
-		char := rune(movetext[0])
-		if util.IsFile(char) || util.IsRank(char) {
-			if len(movetext) > 1 && movetext[1] == 'x' {
-				// This is a disambiguated capture, e.g., "d" in "Rdxf8"
-			} else if len(movetext) > 1 {
-				// Invalid, e.g. "Rdd4"
-				return Move{}, false
-			}
-
-			if util.IsFile(char) {
-				move.From.File = int(char - 'a')
-			} else {
-				move.From.Rank = int(char - '1')
-			}
-			movetext = movetext[1:]
-		}
-	}
+	// Identify and parse the rest of the move components from the prefix.
+	movetext, move.Piece = parsePiece(movetext)
+	movetext, fromSquare := parseDisambiguation(movetext)
+	move.From = fromSquare
 
 	// Check for a capture for piece moves, e.g. "x" in "Nxf3" or "Rdxf8"
 	if len(movetext) > 0 && movetext[0] == 'x' {
@@ -404,6 +376,41 @@ func (p *Parser) parseCoreMove(raw string) (Move, bool) {
 	}
 
 	return move, true
+}
+
+func parsePiece(movetext string) (string, PieceType) {
+	if len(movetext) > 0 {
+		if piece, ok := PieceSymbols[rune(movetext[0])]; ok {
+			return movetext[1:], piece
+		}
+	}
+	return movetext, Pawn
+}
+
+func parseDisambiguation(movetext string) (string, Square) {
+	from := Square{}
+	if len(movetext) == 0 {
+		return movetext, from
+	}
+
+	// It can't be a capture 'x' at this stage. If it is, it's part of
+	// the next parsing step.
+	if movetext[0] == 'x' {
+		return movetext, from
+	}
+
+	// Disambiguation can be one char (file or rank) or two chars (file and rank).
+	// But we don't handle the two-char case yet (e.g. "R1a2").
+	char := rune(movetext[0])
+	if util.IsFile(char) {
+		from.File = int(char - 'a')
+		return movetext[1:], from
+	} else if util.IsRank(char) {
+		from.Rank = int(char - '1')
+		return movetext[1:], from
+	}
+
+	return movetext, from
 }
 
 func newSquare(s string) (Square, bool) {

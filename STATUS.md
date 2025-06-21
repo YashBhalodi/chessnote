@@ -79,6 +79,7 @@ The primary goal of this milestone is to prepare the library for a stable v1.0.0
 - [x] Setup CI with GitHub Actions
 - [x] Add project badges to README
 - [x] Add LICENSE file
+- [x] Refactor `parseCoreMove` to reduce cyclomatic complexity
 
 ## Next Step
 
