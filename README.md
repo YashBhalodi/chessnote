@@ -1,7 +1,7 @@
 # ChessNote: High-Performance PGN Parsing in Go
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/YashBhalodi/chessnote)](https://goreportcard.com/report/github.com/YashBhalodi/chessnote)
-[![GoDoc](https://godoc.org/github.com/YashBhalodi/chessnote?status.svg)](https://godoc.org/github.com/YashBhalodi/chessnote)
+[![Go Reference](https://pkg.go.dev/badge/github.com/YashBhalodi/chessnote.svg)](https://pkg.go.dev/github.com/YashBhalodi/chessnote)
 [![CI](https://github.com/YashBhalodi/chessnote/actions/workflows/ci.yml/badge.svg)](https://github.com/YashBhalodi/chessnote/actions/workflows/ci.yml)
 
 **ChessNote is a production-grade, high-performance Go library for parsing Portable Game Notation (PGN).** It's engineered from the ground up to be a foundational component for ambitious chess applications, from powerful analysis tools and database backends to beautiful game renderers.
@@ -117,7 +117,7 @@ go run .
 
 ## Project Philosophy
 
-This project adheres to a strict set of [engineering guidelines](./docs/engineering_guidelines.md) focused on creating professional, enterprise-grade software. We practice **Test-Driven Development (TDD)**, maintain a comprehensive test suite, and prioritize a clean, stable, and well-documented public API.
+This project adheres to a strict set of engineering guidelines focused on creating professional, enterprise-grade software. We practice **Test-Driven Development (TDD)**, maintain a comprehensive test suite, and prioritize a clean, stable, and well-documented public API.
 
 ## Roadmap & Contributing
 
@@ -130,4 +130,4 @@ Contributions are welcome! Please open an issue to discuss any proposed changes.
 
 ## License
 
-ChessNote is released under the [MIT License](LICENSE).
+ChessNote is released under the [MIT License](./LICENSE).
