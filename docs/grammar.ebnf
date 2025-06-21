@@ -8,13 +8,14 @@ move_number::= digit+ "."
 
 move             ::= ( (pawn_capture | piece_capture) | (pawn_move | piece_move) ) check?
 pawn_move        ::= destination
-piece_move       ::= piece destination
+piece_move       ::= piece disambiguation? destination
 pawn_capture     ::= file "x" destination
-piece_capture    ::= piece "x" destination
+piece_capture    ::= piece disambiguation? "x" destination
 
 check            ::= "+" | "#"
 piece            ::= "N" | "B" | "R" | "Q" | "K"
 destination      ::= file rank
+disambiguation   ::= file | rank
 file             ::= "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h"
 rank             ::= "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8"
 result           ::= "*" | "1-0" | "0-1" | "1/2-1/2"
