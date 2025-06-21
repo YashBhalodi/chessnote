@@ -77,10 +77,11 @@ The primary goal of this milestone is to prepare the library for a stable v1.0.0
 ## Milestone 4: Beta Release & Documentation
 
 - **Goal**: Prepare the library for a public beta release. This includes writing comprehensive documentation, creating examples, and setting up a continuous integration pipeline.
-- **Status**: In Progress
-- **Next Step**: Create a more advanced example that demonstrates iterating through all moves, including variations (RAVs), and printing them in a structured way.
+- **Status**: Completed
+- **Next Step**: Plan for v1.0.0 release. This includes final API review, considering any potential breaking changes, and tagging the release.
 
 ### Completed Tasks
+- **CI Pipeline**: Set up a GitHub Actions workflow to run tests and linters.
 - **Advanced Iterator Example**: Created an example that traverses a full game tree with variations.
 - **Basic Parser Example**: Created a standalone, runnable example that parses a local PGN file.
 - **README Overhaul**: Update the `README.md` to reflect the complete feature set and provide a comprehensive guide for new users. (Done)
