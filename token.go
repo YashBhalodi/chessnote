@@ -17,9 +17,10 @@ const (
 	EOF                      // End of file
 
 	// Literals
-	IDENT  // e.g., Event, White, Nf3, e4, Nxf3+
-	STRING // e.g., "F/S Return Match"
-	NUMBER // e.g., 1, 29
+	IDENT   // e.g., Event, White, Nf3, e4, Nxf3+
+	COMMENT // e.g., { A comment }
+	STRING  // e.g., "F/S Return Match"
+	NUMBER  // e.g., 1, 29
 
 	// Punctuation
 	LBRACKET // [

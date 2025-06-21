@@ -111,11 +111,15 @@ func (p *Parser) Parse() (*Game, error) {
 			if err := p.parseTagPair(game); err != nil {
 				return nil, err
 			}
+		case COMMENT:
+			// Ignore comments that appear before the movetext section.
 		case IDENT, NUMBER:
 			// Once we see an ident or number outside a tag, we are in the movetext.
 			if err := p.parseMovetext(tok, game); err != nil {
 				return nil, err
 			}
+			// After parsing movetext, the game is complete.
+			return game, nil
 		}
 	}
 }
@@ -141,32 +145,38 @@ func (p *Parser) parseTagPair(g *Game) error {
 }
 
 func (p *Parser) parseMovetext(firstToken Token, g *Game) error {
-	// For now, put the first token back and re-scan in a loop.
-	// This is not efficient, but it's a simple way to handle the transition.
-	// We will build a more robust recursive descent parser later.
-	p.s.r.UnreadRune() // This is a hack for now.
-
-	// Re-create a reader from the rest of the stream. This is very inefficient.
-	// A proper implementation would use a buffered scanner that can peek/unread.
-	// But for this refactoring step, we will get it working first.
-	// The rest of the implementation is left as before.
-
-	// The old logic for parsing movetext from raw strings can be adapted here,
-	// but it would be better to parse from the token stream.
-	// Let's just re-implement the move parsing logic based on tokens.
-
-	for tok := firstToken; tok.Type != EOF && tok.Type != ASTERISK; tok = p.s.Scan() {
+	tok := firstToken
+	for {
 		switch tok.Type {
+		case EOF:
+			return nil // Clean exit
+		case ASTERISK:
+			g.Result = tok.Literal
+			return nil
 		case IDENT:
-			// Create a separate function to parse move text to keep this clean.
+			// Could be a move, or a result like "1-0", "0-1", or "1/2-1/2".
+			// The scanner is not perfect, so "1/2-1/2" will be multiple tokens.
+			// We handle the common cases here.
+			if tok.Literal == "1-0" || tok.Literal == "0-1" || tok.Literal == "1/2-1/2" {
+				g.Result = tok.Literal
+				return nil
+			}
+
 			move, ok := p.parseMove(tok.Literal)
 			if ok {
 				g.Moves = append(g.Moves, move)
 			}
+		case NUMBER, DOT:
+			// Ignore move numbers and their trailing dots.
+		case COMMENT:
+			// Ignore comments within movetext.
+		default:
+			// We should not see other tokens like LBRACKET here.
+			// Return an error for unexpected tokens.
+			return fmt.Errorf("unexpected token in movetext: %v", tok)
 		}
+		tok = p.s.Scan()
 	}
-
-	return nil
 }
 
 func (p *Parser) parseMove(raw string) (Move, bool) {

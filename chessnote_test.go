@@ -170,6 +170,50 @@ func TestParseMoves(t *testing.T) {
 	}
 }
 
+func TestParseWithComments(t *testing.T) {
+	t.Parallel()
+	pgn := `
+[Event "Test Game"]
+[Result "1-0"]
+
+{This is a comment at the start.}
+1. e4 ; This is a move comment
+{This is a comment between moves.} e5
+2. Nf3 Nc6 1-0
+`
+	game, err := chessnote.ParseString(pgn)
+	if err != nil {
+		t.Fatalf("ParseString() failed: %v", err)
+	}
+
+	if len(game.Moves) != 4 {
+		t.Fatalf("expected 4 moves, got %d", len(game.Moves))
+	}
+
+	expectedTags := map[string]string{
+		"Event":  "Test Game",
+		"Result": "1-0",
+	}
+	if !reflect.DeepEqual(game.Tags, expectedTags) {
+		t.Errorf("got tags %v, want %v", game.Tags, expectedTags)
+	}
+
+	expectedMoves := []chessnote.Move{
+		{Piece: chessnote.Pawn, To: chessnote.Square{File: 4, Rank: 3}},
+		{Piece: chessnote.Pawn, To: chessnote.Square{File: 4, Rank: 4}},
+		{Piece: chessnote.Knight, To: chessnote.Square{File: 5, Rank: 2}},
+		{Piece: chessnote.Knight, To: chessnote.Square{File: 2, Rank: 5}},
+	}
+
+	if !reflect.DeepEqual(game.Moves, expectedMoves) {
+		t.Errorf("got moves\n%v\nwant\n%v", game.Moves, expectedMoves)
+	}
+
+	if game.Result != "1-0" {
+		t.Errorf("got result %q, want %q", game.Result, "1-0")
+	}
+}
+
 // newSquare is an unexported function, so we test it here in the same package.
 func TestNewSquare(t *testing.T) {
 	t.Parallel()

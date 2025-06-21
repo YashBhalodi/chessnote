@@ -3,7 +3,7 @@ tag_section ::= tag_pair*
 tag_pair    ::= "[" identifier string "]"
 
 movetext_section ::= (element | result)*
-element    ::= move_number | move
+element    ::= move_number | move | comment
 move_number::= digit+ "."
 
 move             ::= ( (pawn_capture | piece_capture) | (pawn_move | piece_move) | castling ) check?
@@ -11,6 +11,7 @@ pawn_move        ::= destination promotion?
 piece_move       ::= piece disambiguation? destination
 pawn_capture     ::= file "x" destination promotion?
 piece_capture    ::= piece disambiguation? "x" destination
+comment          ::= "{" [^}]+ "}" | ";" [^\n]*
 
 check            ::= "+" | "#"
 piece            ::= "N" | "B" | "R" | "Q" | "K"
@@ -23,4 +24,4 @@ rank             ::= "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8"
 result           ::= "*" | "1-0" | "0-1" | "1/2-1/2"
 
 identifier       ::= [A-Za-z_]+
-string           ::= "\"" [^"]* "\"" 
+string           ::= "\"" [^"]* "\""

@@ -43,6 +43,10 @@ func (s *Scanner) Scan() Token {
 		return Token{Type: DOT, Literal: string(r)}
 	case '*':
 		return Token{Type: ASTERISK, Literal: string(r)}
+	case '{':
+		return s.scanCommentBlock()
+	case ';':
+		return s.scanCommentLine()
 	}
 
 	return Token{Type: ILLEGAL, Literal: string(r)}
@@ -93,6 +97,30 @@ func (s *Scanner) scanString() Token {
 		lit += string(r)
 	}
 	return Token{Type: STRING, Literal: lit}
+}
+
+func (s *Scanner) scanCommentBlock() Token {
+	var lit string
+	for {
+		r := s.read()
+		if r == '}' || r == eof {
+			break
+		}
+		lit += string(r)
+	}
+	return Token{Type: COMMENT, Literal: lit}
+}
+
+func (s *Scanner) scanCommentLine() Token {
+	var lit string
+	for {
+		r := s.read()
+		if r == '\n' || r == eof {
+			break
+		}
+		lit += string(r)
+	}
+	return Token{Type: COMMENT, Literal: lit}
 }
 
 func (s *Scanner) read() rune {
