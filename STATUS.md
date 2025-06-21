@@ -81,5 +81,6 @@ The primary goal of this milestone is to prepare the library for a stable v1.0.0
 - **Next Step**: Create a more advanced example that demonstrates iterating through all moves, including variations (RAVs), and printing them in a structured way.
 
 ### Completed Tasks
+- **Advanced Iterator Example**: Created an example that traverses a full game tree with variations.
 - **Basic Parser Example**: Created a standalone, runnable example that parses a local PGN file.
 - **README Overhaul**: Update the `README.md` to reflect the complete feature set and provide a comprehensive guide for new users. (Done)

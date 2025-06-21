@@ -1,4 +1,4 @@
-package chessnote
+package scanner
 
 import (
 	"strings"
@@ -87,6 +87,14 @@ func TestScanner(t *testing.T) {
 			input: `O-O-O+`,
 			want: []Token{
 				{Type: IDENT, Literal: "O-O-O+"},
+				{Type: EOF},
+			},
+		},
+		{
+			name:  "draw result",
+			input: `1/2-1/2`,
+			want: []Token{
+				{Type: IDENT, Literal: "1/2-1/2"},
 				{Type: EOF},
 			},
 		},

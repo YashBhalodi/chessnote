@@ -1,4 +1,4 @@
-package chessnote
+package scanner
 
 import (
 	"bufio"
@@ -80,15 +80,22 @@ func (s *Scanner) scanIdent() Token {
 		r := s.read()
 		if r == eof {
 			break
-		} else if !util.IsLetter(r) && !util.IsDigit(r) && r != '_' && r != '+' && r != '#' && r != 'x' && r != '=' && r != '-' {
+		} else if !util.IsLetter(r) && !util.IsDigit(r) && r != '_' && r != '+' && r != '#' && r != 'x' && r != '=' && r != '-' && r != '/' {
 			s.unread()
 			break
 		}
 		lit += string(r)
 	}
 
-	if _, err := strconv.Atoi(lit); err == nil {
-		return Token{Type: NUMBER, Literal: lit}
+	// This is a bit of a hack, we should ideally have a proper number token.
+	// But for PGN, numbers only appear as move numbers or in tags, where they
+	// can be treated as identifiers. We only really need to distinguish them
+	// to know when we are in the movetext section.
+	if len(lit) > 0 && util.IsDigit(rune(lit[0])) {
+		if _, err := strconv.Atoi(lit); err == nil {
+			// It's a pure number.
+			return Token{Type: NUMBER, Literal: lit}
+		}
 	}
 	return Token{Type: IDENT, Literal: lit}
 }

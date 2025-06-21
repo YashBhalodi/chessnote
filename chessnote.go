@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/YashBhalodi/chessnote/internal/scanner"
 	"github.com/YashBhalodi/chessnote/internal/util"
 )
 
@@ -93,13 +94,13 @@ var PieceSymbols = map[rune]PieceType{
 // Parser is a PGN parser that reads from an io.Reader and parses it into a Game.
 // It implements a standard recursive descent parser.
 type Parser struct {
-	s   *Scanner
-	tok Token // The current token
+	s   *scanner.Scanner
+	tok scanner.Token // The current token
 }
 
 // NewParser creates and returns a new PGN Parser for the given reader.
 func NewParser(r io.Reader) *Parser {
-	p := &Parser{s: NewScanner(r)}
+	p := &Parser{s: scanner.NewScanner(r)}
 	p.scan() // Initialize the first token
 	return p
 }
@@ -119,15 +120,15 @@ func (p *Parser) Parse() (*Game, error) {
 
 	for {
 		switch p.tok.Type {
-		case EOF:
+		case scanner.EOF:
 			return game, nil
-		case LBRACKET:
+		case scanner.LBRACKET:
 			if err := p.parseTagPair(game); err != nil {
 				return nil, err
 			}
-		case COMMENT:
+		case scanner.COMMENT:
 			p.scan() // Ignore comments
-		case IDENT, NUMBER:
+		case scanner.IDENT, scanner.NUMBER:
 			// Once we see an ident or number outside a tag, we are in the movetext.
 			if err := p.parseMovetext(&game.Moves); err != nil {
 				return nil, err
@@ -146,19 +147,19 @@ func (p *Parser) Parse() (*Game, error) {
 func (p *Parser) parseTagPair(g *Game) error {
 	p.scan() // Consume '['
 	key := p.tok
-	if key.Type != IDENT {
+	if key.Type != scanner.IDENT {
 		return fmt.Errorf("expected ident for tag key, got %v", key)
 	}
 
 	p.scan() // Consume key
 	value := p.tok
-	if value.Type != STRING {
+	if value.Type != scanner.STRING {
 		return fmt.Errorf("expected string for tag value, got %v", value)
 	}
 	g.Tags[key.Literal] = value.Literal
 
 	p.scan() // Consume value
-	if p.tok.Type != RBRACKET {
+	if p.tok.Type != scanner.RBRACKET {
 		return fmt.Errorf("expected ']' to close tag, got %v", p.tok)
 	}
 	p.scan() // Consume ']'
@@ -168,9 +169,9 @@ func (p *Parser) parseTagPair(g *Game) error {
 func (p *Parser) parseMovetext(moves *[]Move) error {
 	for {
 		switch p.tok.Type {
-		case EOF, ASTERISK, RPAREN:
+		case scanner.EOF, scanner.ASTERISK, scanner.RPAREN:
 			return nil // Let caller handle termination
-		case IDENT:
+		case scanner.IDENT:
 			if isResult(p.tok) {
 				return nil // Let caller handle result
 			}
@@ -179,7 +180,7 @@ func (p *Parser) parseMovetext(moves *[]Move) error {
 				return err
 			}
 			*moves = append(*moves, move)
-		case NAG:
+		case scanner.NAG:
 			if len(*moves) == 0 {
 				return fmt.Errorf("found NAG before any moves")
 			}
@@ -194,9 +195,9 @@ func (p *Parser) parseMovetext(moves *[]Move) error {
 			}
 			lastMove.NAGs = append(lastMove.NAGs, nag)
 			p.scan()
-		case NUMBER, DOT, COMMENT:
+		case scanner.NUMBER, scanner.DOT, scanner.COMMENT:
 			p.scan() // Ignore
-		case LPAREN:
+		case scanner.LPAREN:
 			if len(*moves) == 0 {
 				return fmt.Errorf("found variation before any moves")
 			}
@@ -217,7 +218,7 @@ func (p *Parser) parseRAV(parentMove *Move) error {
 		return err
 	}
 
-	if p.tok.Type != RPAREN {
+	if p.tok.Type != scanner.RPAREN {
 		return fmt.Errorf("expected ')' to close variation, got %v", p.tok)
 	}
 	p.scan() // Consume ')'
@@ -229,11 +230,11 @@ func (p *Parser) parseRAV(parentMove *Move) error {
 	return nil
 }
 
-func isResult(tok Token) bool {
-	if tok.Type == ASTERISK {
+func isResult(tok scanner.Token) bool {
+	if tok.Type == scanner.ASTERISK {
 		return true
 	}
-	if tok.Type == IDENT && (tok.Literal == "1-0" || tok.Literal == "0-1" || tok.Literal == "1/2-1/2") {
+	if tok.Type == scanner.IDENT && (tok.Literal == "1-0" || tok.Literal == "0-1" || tok.Literal == "1/2-1/2") {
 		return true
 	}
 	return false

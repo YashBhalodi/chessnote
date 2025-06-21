@@ -105,6 +105,16 @@ go run .
 go run . --pgn_file=/path/to/your/game.pgn
 ```
 
+To run the advanced iterator example, which demonstrates traversing a game's move tree including variations:
+
+```sh
+# Navigate to the example directory
+cd examples/advanced_iterator
+
+# Run the program.
+go run .
+```
+
 ## Project Philosophy
 
 This project adheres to a strict set of [engineering guidelines](./docs/engineering_guidelines.md) focused on creating professional, enterprise-grade software. We practice **Test-Driven Development (TDD)**, maintain a comprehensive test suite, and prioritize a clean, stable, and well-documented public API.
