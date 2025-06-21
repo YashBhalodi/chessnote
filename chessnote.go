@@ -6,43 +6,54 @@ import (
 	"strings"
 )
 
-// Game represents a single parsed PGN game.
+// Game represents a single parsed PGN game, including its tag pairs,
+// movetext, and final result.
 type Game struct {
-	Tags   map[string]string
-	Moves  []Move
+	// Tags is a map of PGN tag key-value pairs.
+	Tags map[string]string
+	// Moves is a slice of moves made in the game.
+	Moves []Move
+	// Result is the final result of the game (e.g., "1-0", "0-1").
 	Result string
 }
 
-// Move represents a single move by one player.
+// Move represents a single move made by one player.
 type Move struct {
-	From      Square
-	To        Square
-	Piece     PieceType
+	// From is the starting square of the move.
+	From Square
+	// To is the destination square of the move.
+	To Square
+	// Piece is the type of piece that was moved.
+	Piece PieceType
+	// IsCapture indicates whether the move was a capture.
 	IsCapture bool
-	IsCheck   bool
-	IsMate    bool
+	// IsCheck indicates whether the move resulted in a check.
+	IsCheck bool
+	// IsMate indicates whether the move resulted in a checkmate.
+	IsMate bool
 }
 
 // Square represents a single square on the board (e.g., e4).
 type Square struct {
-	File int // 0-7 for a-h
-	Rank int // 0-7 for 1-8
+	// File is the file of the square, represented as 0-7 for files a-h.
+	File int
+	// Rank is the rank of the square, represented as 0-7 for ranks 1-8.
+	Rank int
 }
 
 // PieceType defines the type of chess piece.
 type PieceType int
 
-// Parser is a PGN parser.
-type Parser struct {
-	// TODO: Add fields for the parser state
-}
+// Parser is a PGN parser that reads from an io.Reader and parses it into a Game.
+type Parser struct{}
 
-// NewParser creates a new PGN parser.
+// NewParser creates and returns a new PGN Parser.
 func NewParser() *Parser {
 	return &Parser{}
 }
 
-// Parse reads from an io.Reader and returns a parsed Game.
+// Parse reads PGN data from an io.Reader, parses it, and returns a Game object.
+// It processes the tag pairs and will be extended to parse the full movetext.
 func (p *Parser) Parse(r io.Reader) (*Game, error) {
 	game := &Game{
 		Tags: make(map[string]string),
@@ -64,7 +75,8 @@ func (p *Parser) Parse(r io.Reader) (*Game, error) {
 	return game, nil
 }
 
-// ParseString is a helper to parse a PGN string.
+// ParseString is a convenience helper that parses a PGN string.
+// It wraps the input string in a strings.Reader and calls Parse.
 func (p *Parser) ParseString(s string) (*Game, error) {
 	return p.Parse(strings.NewReader(s))
 } 

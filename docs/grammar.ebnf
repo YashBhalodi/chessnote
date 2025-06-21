@@ -1,0 +1,5 @@
+pgn         ::= tag_section
+tag_section ::= tag_pair*
+tag_pair    ::= "[" identifier string "]"
+identifier  ::= [A-Za-z0-9_]+
+string      ::= "\"" ( [^"]* ) "\"" 
