@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"strings"
+
+	"github.com/HexaTech/chessnote/internal/util"
 )
 
 // Game represents a single parsed PGN game, including its tag pairs,
@@ -150,9 +152,8 @@ func (p *Parser) parseMove(raw string) (Move, bool) {
 	// Pawn captures like "exd5"
 	if len(raw) == 4 && raw[1] == 'x' {
 		// This could be a piece or a pawn capture. Check if the first char is a file.
-		if raw[0] >= 'a' && raw[0] <= 'h' {
-			dest := raw[2:]
-			if len(dest) == 2 && dest[0] >= 'a' && dest[0] <= 'h' && dest[1] >= '1' && dest[1] <= '8' {
+		if util.IsFile(rune(raw[0])) {
+			if dest, ok := newSquare(raw[2:]); ok {
 				return Move{
 					Piece:     Pawn,
 					IsCapture: true,
@@ -160,25 +161,18 @@ func (p *Parser) parseMove(raw string) (Move, bool) {
 						File: int(raw[0] - 'a'),
 						// Rank is unknown from this notation
 					},
-					To: Square{
-						File: int(dest[0] - 'a'),
-						Rank: int(dest[1] - '1'),
-					},
+					To: dest,
 				}, true
 			}
 		}
 
 		// Piece captures like "Nxf3"
 		if piece, ok := PieceSymbols[rune(raw[0])]; ok {
-			dest := raw[2:]
-			if len(dest) == 2 && dest[0] >= 'a' && dest[0] <= 'h' && dest[1] >= '1' && dest[1] <= '8' {
+			if dest, ok := newSquare(raw[2:]); ok {
 				return Move{
 					Piece:     piece,
 					IsCapture: true,
-					To: Square{
-						File: int(dest[0] - 'a'),
-						Rank: int(dest[1] - '1'),
-					},
+					To:        dest,
 				}, true
 			}
 		}
@@ -187,31 +181,34 @@ func (p *Parser) parseMove(raw string) (Move, bool) {
 	// Piece moves like "Nf3"
 	if len(raw) == 3 {
 		if piece, ok := PieceSymbols[rune(raw[0])]; ok {
-			dest := raw[1:]
-			if len(dest) == 2 && dest[0] >= 'a' && dest[0] <= 'h' && dest[1] >= '1' && dest[1] <= '8' {
+			if dest, ok := newSquare(raw[1:]); ok {
 				return Move{
 					Piece: piece,
-					To: Square{
-						File: int(dest[0] - 'a'),
-						Rank: int(dest[1] - '1'),
-					},
+					To:    dest,
 				}, true
 			}
 		}
 	}
 
 	// Pawn moves like "e4"
-	if len(raw) == 2 && raw[0] >= 'a' && raw[0] <= 'h' && raw[1] >= '1' && raw[1] <= '8' {
+	if dest, ok := newSquare(raw); ok {
 		return Move{
 			Piece: Pawn,
-			To: Square{
-				File: int(raw[0] - 'a'),
-				Rank: int(raw[1] - '1'),
-			},
+			To:    dest,
 		}, true
 	}
 
 	return Move{}, false
+}
+
+func newSquare(s string) (Square, bool) {
+	if len(s) != 2 || !util.IsFile(rune(s[0])) || !util.IsRank(rune(s[1])) {
+		return Square{}, false
+	}
+	return Square{
+		File: int(s[0] - 'a'),
+		Rank: int(s[1] - '1'),
+	}, true
 }
 
 // ParseString is a convenience helper that parses a PGN string.

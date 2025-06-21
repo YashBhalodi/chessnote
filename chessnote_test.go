@@ -127,3 +127,47 @@ func TestParsePawnCapture(t *testing.T) {
 		t.Errorf("Parse() got = %+v, want %+v", got, want[0])
 	}
 }
+
+// newSquare is an unexported function, so we test it here in the same package.
+func TestNewSquare(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name   string
+		s      string
+		want   chessnote.Square
+		wantOk bool
+	}{
+		{"valid square", "e4", chessnote.Square{File: 4, Rank: 3}, true},
+		{"invalid file", "z4", chessnote.Square{}, false},
+		{"invalid rank", "e9", chessnote.Square{}, false},
+		{"too short", "e", chessnote.Square{}, false},
+		{"too long", "e4e5", chessnote.Square{}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// This is a bit of a hack to test an unexported function.
+			// In a real project, you might expose this as a public utility
+			// if it were needed, or keep it tested implicitly via the parser.
+			// For this case, direct testing is clearer.
+			// We can't call chessnote.newSquare directly, so we parse a move.
+			game, err := chessnote.ParseString(tt.s)
+			if err != nil && tt.wantOk {
+				t.Fatalf("ParseString() error = %v", err)
+			}
+
+			var got chessnote.Square
+			var gotOk bool
+			if len(game.Moves) == 1 {
+				got = game.Moves[0].To
+				gotOk = true
+			}
+
+			if gotOk != tt.wantOk {
+				t.Fatalf("newSquare() ok = %v, want %v", gotOk, tt.wantOk)
+			}
+			if gotOk && !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("newSquare() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

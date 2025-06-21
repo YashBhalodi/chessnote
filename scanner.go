@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"io"
 	"strconv"
+
+	"github.com/HexaTech/chessnote/internal/util"
 )
 
 // Scanner is responsible for lexical analysis of a PGN input stream.
@@ -20,10 +22,10 @@ func NewScanner(r io.Reader) *Scanner {
 func (s *Scanner) Scan() Token {
 	r := s.read()
 
-	if isWhitespace(r) {
+	if util.IsWhitespace(r) {
 		s.unread()
 		return s.scanWhitespace()
-	} else if isLetter(r) || isDigit(r) {
+	} else if util.IsLetter(r) || util.IsDigit(r) {
 		s.unread()
 		return s.scanIdent()
 	}
@@ -52,7 +54,7 @@ func (s *Scanner) scanWhitespace() Token {
 		r := s.read()
 		if r == eof {
 			break
-		} else if !isWhitespace(r) {
+		} else if !util.IsWhitespace(r) {
 			s.unread()
 			break
 		}
@@ -68,7 +70,7 @@ func (s *Scanner) scanIdent() Token {
 		r := s.read()
 		if r == eof {
 			break
-		} else if !isLetter(r) && !isDigit(r) && r != '_' {
+		} else if !util.IsLetter(r) && !util.IsDigit(r) && r != '_' {
 			s.unread()
 			break
 		}
@@ -106,15 +108,3 @@ func (s *Scanner) unread() {
 }
 
 var eof = rune(0)
-
-func isWhitespace(r rune) bool {
-	return r == ' ' || r == '\t' || r == '\n'
-}
-
-func isLetter(r rune) bool {
-	return (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z')
-}
-
-func isDigit(r rune) bool {
-	return r >= '0' && r <= '9'
-}
