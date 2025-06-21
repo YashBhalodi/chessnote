@@ -2,7 +2,6 @@ package chessnote_test
 
 import (
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/HexaTech/chessnote"
@@ -19,8 +18,7 @@ func TestParseTagPairs(t *testing.T) {
 [Black "Spassky, Boris V."]
 [Result "1/2-1/2"]
 `
-	p := chessnote.NewParser()
-	game, err := p.Parse(strings.NewReader(pgn))
+	game, err := chessnote.ParseString(pgn)
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
@@ -43,8 +41,7 @@ func TestParseTagPairs(t *testing.T) {
 func TestParsePawnMove(t *testing.T) {
 	t.Parallel()
 	pgn := `1. e4 *`
-	p := chessnote.NewParser()
-	game, err := p.Parse(strings.NewReader(pgn))
+	game, err := chessnote.ParseString(pgn)
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
@@ -63,8 +60,7 @@ func TestParsePawnMove(t *testing.T) {
 func TestParsePieceMove(t *testing.T) {
 	t.Parallel()
 	pgn := `1. Nf3 *`
-	p := chessnote.NewParser()
-	game, err := p.Parse(strings.NewReader(pgn))
+	game, err := chessnote.ParseString(pgn)
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}

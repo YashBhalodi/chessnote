@@ -1,7 +1,7 @@
 package chessnote
 
 import (
-	"bufio"
+	"fmt"
 	"io"
 	"strings"
 )
@@ -63,49 +63,82 @@ var PieceSymbols = map[rune]PieceType{
 }
 
 // Parser is a PGN parser that reads from an io.Reader and parses it into a Game.
-type Parser struct{}
+type Parser struct {
+	s *Scanner
+}
 
 // NewParser creates and returns a new PGN Parser.
-func NewParser() *Parser {
-	return &Parser{}
+func NewParser(r io.Reader) *Parser {
+	return &Parser{s: NewScanner(r)}
 }
 
 // Parse reads PGN data from an io.Reader, parses it, and returns a Game object.
 // It processes the tag pairs and will be extended to parse the full movetext.
-func (p *Parser) Parse(r io.Reader) (*Game, error) {
+func (p *Parser) Parse() (*Game, error) {
 	game := &Game{
 		Tags: make(map[string]string),
 	}
-	scanner := bufio.NewScanner(r)
-	inMovetext := false
 
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue // Skip empty lines
-		}
-
-		// Try to parse as a tag pair first
-		if !inMovetext && strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
-			line = strings.TrimPrefix(line, "[")
-			line = strings.TrimSuffix(line, "]")
-			parts := strings.SplitN(line, " ", 2)
-			if len(parts) == 2 {
-				key := parts[0]
-				value := strings.Trim(parts[1], "\"")
-				game.Tags[key] = value
-				continue // Successfully parsed a tag, move to the next line
+	for {
+		tok := p.s.Scan()
+		switch tok.Type {
+		case EOF:
+			return game, nil
+		case LBRACKET:
+			if err := p.parseTagPair(game); err != nil {
+				return nil, err
+			}
+		case IDENT, NUMBER:
+			// Once we see an ident or number outside a tag, we are in the movetext.
+			if err := p.parseMovetext(tok, game); err != nil {
+				return nil, err
 			}
 		}
+	}
+}
 
-		// If it's not a tag pair, it must be movetext from here on out.
-		inMovetext = true
-		tokens := strings.Fields(line)
-		for _, token := range tokens {
+func (p *Parser) parseTagPair(g *Game) error {
+	key := p.s.Scan()
+	if key.Type != IDENT {
+		return fmt.Errorf("expected ident for tag key, got %v", key)
+	}
+
+	value := p.s.Scan()
+	if value.Type != STRING {
+		return fmt.Errorf("expected string for tag value, got %v", value)
+	}
+
+	g.Tags[key.Literal] = value.Literal
+
+	end := p.s.Scan()
+	if end.Type != RBRACKET {
+		return fmt.Errorf("expected ']' to close tag, got %v", end)
+	}
+	return nil
+}
+
+func (p *Parser) parseMovetext(firstToken Token, g *Game) error {
+	// For now, put the first token back and re-scan in a loop.
+	// This is not efficient, but it's a simple way to handle the transition.
+	// We will build a more robust recursive descent parser later.
+	p.s.r.UnreadRune() // This is a hack for now.
+
+	// Re-create a reader from the rest of the stream. This is very inefficient.
+	// A proper implementation would use a buffered scanner that can peek/unread.
+	// But for this refactoring step, we will get it working first.
+	// The rest of the implementation is left as before.
+
+	// The old logic for parsing movetext from raw strings can be adapted here,
+	// but it would be better to parse from the token stream.
+	// Let's just re-implement the move parsing logic based on tokens.
+
+	for tok := firstToken; tok.Type != EOF && tok.Type != ASTERISK; tok = p.s.Scan() {
+		switch tok.Type {
+		case IDENT:
 			// Is it a piece move? (e.g., Nf3)
-			if len(token) == 3 {
-				if piece, ok := PieceSymbols[rune(token[0])]; ok {
-					dest := token[1:]
+			if len(tok.Literal) == 3 {
+				if piece, ok := PieceSymbols[rune(tok.Literal[0])]; ok {
+					dest := tok.Literal[1:]
 					if len(dest) == 2 && dest[0] >= 'a' && dest[0] <= 'h' && dest[1] >= '1' && dest[1] <= '8' {
 						move := Move{
 							Piece: piece,
@@ -114,30 +147,31 @@ func (p *Parser) Parse(r io.Reader) (*Game, error) {
 								Rank: int(dest[1] - '1'),
 							},
 						}
-						game.Moves = append(game.Moves, move)
+						g.Moves = append(g.Moves, move)
 						continue
 					}
 				}
 			}
 
 			// Is it a pawn move? (e.g., e4)
-			if len(token) == 2 && token[0] >= 'a' && token[0] <= 'h' && token[1] >= '1' && token[1] <= '8' {
+			if len(tok.Literal) == 2 && tok.Literal[0] >= 'a' && tok.Literal[0] <= 'h' && tok.Literal[1] >= '1' && tok.Literal[1] <= '8' {
 				move := Move{
-					Piece: Pawn, // Assume Pawn for now
+					Piece: Pawn,
 					To: Square{
-						File: int(token[0] - 'a'),
-						Rank: int(token[1] - '1'),
+						File: int(tok.Literal[0] - 'a'),
+						Rank: int(tok.Literal[1] - '1'),
 					},
 				}
-				game.Moves = append(game.Moves, move)
+				g.Moves = append(g.Moves, move)
 			}
 		}
 	}
-	return game, nil
+
+	return nil
 }
 
 // ParseString is a convenience helper that parses a PGN string.
-// It wraps the input string in a strings.Reader and calls Parse.
-func (p *Parser) ParseString(s string) (*Game, error) {
-	return p.Parse(strings.NewReader(s))
+func ParseString(s string) (*Game, error) {
+	p := NewParser(strings.NewReader(s))
+	return p.Parse()
 }
