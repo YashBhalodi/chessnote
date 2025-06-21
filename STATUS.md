@@ -95,9 +95,10 @@ The primary goal of this milestone is to prepare the library for a stable v1.0.0
 
 The primary goal of this milestone is to elevate the library to a true production-grade standard by adding benchmarks, fuzz testing, and contributor documentation. This will prepare us for a stable `v1.0.0` release.
 
-- **Next Step**: Add performance benchmarks to `chessnote_test.go` to validate performance claims and prevent regressions.
+- **Completed Features**:
+    - **Benchmarking**: Added performance benchmarks, including a comprehensive test against a large, real-world PGN file (`Kasparov.pgn`), to validate performance claims and prevent regressions.
+- **Next Step**: Implement a fuzz test for the parser to ensure it handles all malformed input without crashing.
 - **Upcoming Tasks**:
-    - Implement a fuzz test for the parser to ensure it handles all malformed input.
     - Create a `CONTRIBUTING.md` file to guide future contributors.
 
 ---
