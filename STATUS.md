@@ -84,3 +84,11 @@ The primary goal of this milestone is to prepare the library for a stable v1.0.0
 ## Next Step
 
 - Publish the first version of the library (`v0.1.0`).
+
+## Milestone 5: The First Release
+
+- [x] Publish `v0.1.0`
+
+## Next Step
+
+- Plan the roadmap for `v1.0.0` and the development of the `chessnote` CLI tool.
