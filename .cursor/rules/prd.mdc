@@ -1,0 +1,171 @@
+---
+description: This is the technical product requirment documents for this entire project. Information mentioned in this was written before starting the project, so content may or may not be outdated.
+globs: 
+alwaysApply: false
+---
+# ChessNote - PGN Parser Technical PRD
+
+## 1\. Overview
+
+**ChessNote** is a high-performance, production-grade Go library for parsing Portable Game Notation (PGN), the universal standard for chess game data.
+
+The project's primary goal is to provide developers with a robust, reliable, and easy-to-use tool to read, parse, and validate chess games. It will be built from the ground up with a focus on excellent error handling, strong performance, and a clean, idiomatic Go API. This project serves as a foundational component for a wide range of potential chess applications, from analysis tools to game renderers.
+
+## 2\. Target Audience
+
+* **Go Developers:** Go programmers who want to incorporate chess logic into their applications without writing a parser from scratch.
+* **Chess Analysts & Researchers:** Individuals who need to programmatically analyze large databases of PGN files.
+* **Hobbyist Chess Programmers:** Enthusiasts building their own chess engines, GUIs, or analysis tools.
+
+## 3\. Goals & Success Metrics
+
+* **Correctness:** To accurately parse the full range of common PGN syntax.
+* **Performance:** To be fast enough for analyzing large batches of games.
+* **Developer Experience:** To provide a clean, well-documented API and best-in-class error messages.
+
+| Goal | Success Metric |
+| -- | -- |
+| **High Reliability** | 90% test coverage; Full fuzz testing harness to prevent crashes on malformed input. |
+| **Excellent Performance** | Publicly published benchmarks parsing thousands of PGNs per second on standard hardware. |
+| **Great Developer UX** | A comprehensive `README.md`, full GoDoc API documentation, and an `examples/` directory. |
+| **Community Trust** | A CI/CD pipeline (GitHub Actions) that runs all checks on every commit, ensuring master is always stable. |
+
+## 4\. Non-Goals (For Milestone 1)
+
+* **Full Chess Engine:** This library will parse and validate moves, but it will not be a chess engine capable of playing or suggesting moves.
+* **Graphical User Interface (GUI):** This is a library and a CLI tool, not a graphical application.
+* **Exotic PGN Variants:** Support for non-standard or obscure PGN format variations is out of scope for the initial milestones.
+
+## 5\. Milestones
+
+### Milestone 1: The Production-Grade Parser (Resume Ready)
+
+*Goal: Create a robust, well-tested, and well-documented open-source library that can parse the most common PGN syntax.*
+
+**Features:**
+
+1. **Tag Pair Parsing:** Parse the Seven Tag Roster (`Event`, `Site`, `Date`, `Round`, `White`, `Black`, `Result`).
+2. **Core Movetext Parsing:**
+   * Parse move numbers (e.g., `1.`, `2.`).
+   * Parse standard pawn moves (`e4`).
+   * Parse standard piece moves (`Nf3`).
+   * Parse captures (`Nxf3`).
+   * Parse checks (`+`) and checkmates (`#`).
+3. **Basic Data Model:** Provide clean Go structs (`Game`, `Move`) representing the parsed data.
+4. **Excellent Error Handling:** Provide clear, structured errors for syntax violations (e.g., `SyntaxError: invalid square 'e9' on line 12, column 5`).
+
+**Deliverables:**
+
+* A public GitHub repository for `chessnote`.
+* A `README.md` with installation, quick-start, and usage examples.
+* Full GoDoc documentation for the public API.
+* A CI pipeline in GitHub Actions that runs `go test`, `go fmt`, and `go vet`.
+* **Minimum 90% test coverage.**
+
+---
+
+### Milestone 2: Advanced Syntax & Semantic Validation
+
+*Goal: Extend the parser to support the full PGN specification and add a layer of semantic validation to check for move legality.*
+
+**Features:**
+
+1. **Advanced PGN Parsing:**
+   * Support for move disambiguation (`Rdf8`, `N1c3`).
+   * Support for pawn promotion (`e8=Q`).
+   * Support for castling (`O-O`, `O-O-O`).
+   * Support for comments (`{...}`).
+2. **Semantic Validator:**
+   * Implement a `Board` struct to represent the state of the chessboard.
+   * Implement a function `ApplyMove(move Move)` that updates the board state.
+   * Implement a function `IsLegal(move Move)` that checks if a move is valid according to the rules of chess from the current board state.
+   * The main parser can now return both `SyntaxError` and `SemanticError` (e.g., `SemanticError: illegal move, knight cannot move from c3 to c5`).
+
+---
+
+### Milestone 3: The CLI & GIF Renderer
+
+*Goal: Build a user-facing product on top of the library to demonstrate its value and capabilities.*
+
+**Features:**
+
+1. `chessnote` CLI Tool:
+   * `chessnote validate <file.pgn>`: Validates syntax and move legality.
+   * `chessnote stats <file.pgn>`: Prints metadata and game statistics.
+2. **GIF Renderer:**
+   * `chessnote render <file.pgn> --out=game.gif`: A new command that generates an animated GIF of the game.
+   * Flags to control theme, piece set, and animation speed.
+
+## 6\. Technical Specifications (For Milestone 1)
+
+### EBNF (Informal)
+
+This grammar will guide the development of our hand-written parser for Milestone 1.
+
+```ebnf
+pgn        ::= tag_section movetext_section
+tag_section::= (tag_pair)*
+tag_pair   ::= "[" identifier string "]"
+
+movetext_section ::= element* result
+element    ::= move_number | move | comment
+move_number::= digit+ "."
+
+move       ::= piece_move | pawn_move
+piece_move ::= piece [file | rank]? "x"? destination check?
+pawn_move  ::= [file "x"]? destination check?
+
+piece      ::= "N" | "B" | "R" | "Q" | "K"
+destination::= file rank
+file       ::= "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h"
+rank       ::= "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8"
+check      ::= "+" | "#"
+result     ::= "1-0" | "0-1" | "1/2-1/2" | "*"
+```
+
+### Data Models (Go Structs)
+
+```go
+package chessnote
+
+// Game represents a single parsed PGN game.
+type Game struct {
+    Tags  map[string]string
+    Moves []Move
+    Result string
+}
+
+// Move represents a single move by one player.
+type Move struct {
+    From      Square
+    To        Square
+    Piece     PieceType
+    IsCapture bool
+    IsCheck   bool
+    IsMate    bool
+}
+
+// Square represents a single square on the board (e.g., e4).
+type Square struct {
+    File int // 0-7 for a-h
+    Rank int // 0-7 for 1-8
+}
+
+// PieceType defines the type of chess piece.
+type PieceType int
+```
+
+### Public API
+
+```go
+package chessnote
+
+// NewParser creates a new PGN parser.
+func NewParser() *Parser
+
+// Parse reads from an io.Reader and returns a parsed Game.
+func (p *Parser) Parse(r io.Reader) (*Game, error)
+
+// ParseString is a helper to parse a PGN string.
+func (p *Parser) ParseString(s string) (*Game, error)
+```
