@@ -97,10 +97,9 @@ The primary goal of this milestone is to elevate the library to a true productio
 
 - **Completed Features**:
     - **Benchmarking**: Added performance benchmarks, including a comprehensive test against a large, real-world PGN file (`Kasparov.pgn`), to validate performance claims and prevent regressions.
-- **Next Step**: Reorganize and enhance project documentation. This includes creating a detailed technical documentation hub in the `docs/` directory and refining the main `README.md` to serve as a high-level project showcase.
-- **Upcoming Tasks**:
-    - Implement a fuzz test for the parser to ensure it handles all malformed input without crashing.
-    - Create a `CONTRIBUTING.md` file to guide future contributors.
+    - **Documentation**: Reorganized and enhanced project documentation.
+    - **Fuzz Testing**: Implemented a fuzz test for the parser, ensuring it can handle a wide range of malformed inputs without crashing.
+- **Next Step**: Create a `CONTRIBUTING.md` file to guide future contributors.
 
 ---
 
