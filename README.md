@@ -123,14 +123,11 @@ This project adheres to a strict set of engineering guidelines focused on creati
 
 For a deep dive into the parser's architecture, execution flow, and design decisions, please see our comprehensive **[Technical Documentation](./docs/README.md)**. This is the best resource for developers looking to contribute to the project or understand its inner workings.
 
-## Roadmap & Contributing
+## Contributing & Future Roadmap
 
-ChessNote is currently feature-complete for parsing. Our future roadmap (Milestone 4) is focused on building tools on top of the library:
+ChessNote's parser is now stable and feature-complete. While there is no immediate roadmap for new features, we are always open to suggestions and contributions from the community.
 
-*   **`chessnote` CLI:** A command-line tool for validating and analyzing PGN files.
-*   **GIF Renderer:** A tool to generate animated GIFs of chess games.
-
-Contributions are welcome! Please open an issue to discuss any proposed changes.
+If you have an idea for a new feature or a suggestion for improvement, we encourage you to open a GitHub issue to discuss it. For more detailed guidelines on how to contribute, please see our [Contributing Guide](./CONTRIBUTING.md).
 
 ## License
 
