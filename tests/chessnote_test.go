@@ -247,6 +247,31 @@ func TestParseWithRAV(t *testing.T) {
 	}
 }
 
+func TestParseStrictness(t *testing.T) {
+	t.Parallel()
+	pgnWithoutResult := "1. e4 e5" // No result token
+
+	t.Run("strict mode fails without result", func(t *testing.T) {
+		_, err := chessnote.ParseString(pgnWithoutResult)
+		if err == nil {
+			t.Error("expected an error in strict mode for PGN without a result, but got nil")
+		}
+	})
+
+	t.Run("lax mode succeeds without result", func(t *testing.T) {
+		game, err := chessnote.ParseString(pgnWithoutResult, chessnote.WithLaxParsing())
+		if err != nil {
+			t.Errorf("expected no error in lax mode, but got: %v", err)
+		}
+		if game == nil {
+			t.Fatal("expected a game object, but got nil")
+		}
+		if len(game.Moves) != 2 {
+			t.Errorf("expected 2 moves, got %d", len(game.Moves))
+		}
+	})
+}
+
 func TestParseWithNAGs(t *testing.T) {
 	t.Parallel()
 	pgn := `1. e4 $1 1... e5 $2 $18 *`

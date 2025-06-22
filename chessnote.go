@@ -91,16 +91,53 @@ var PieceSymbols = map[rune]PieceType{
 	'K': King,
 }
 
+// ParserConfig holds configuration settings for the parser.
+type ParserConfig struct {
+	// Strict mode requires that a PGN game must end with a valid result token
+	// (*, 1-0, 0-1, or 1/2-1/2). When disabled (lax mode), a game can end
+	// at the end of the file without a result token.
+	// It is enabled by default.
+	Strict bool
+}
+
+// A ParserOption configures a Parser.
+type ParserOption func(*ParserConfig)
+
+// WithLaxParsing returns a ParserOption that disables strict parsing mode.
+// In lax mode, the parser will not require a final game result token and will
+// successfully parse a game that ends abruptly at the end of the file.
+func WithLaxParsing() ParserOption {
+	return func(c *ParserConfig) {
+		c.Strict = false
+	}
+}
+
 // Parser is a PGN parser that reads from an io.Reader and parses it into a Game.
 // It implements a standard recursive descent parser.
 type Parser struct {
-	s   *scanner.Scanner
-	tok scanner.Token // The current token
+	s      *scanner.Scanner
+	tok    scanner.Token // The current token
+	config ParserConfig
 }
 
 // NewParser creates and returns a new PGN Parser for the given reader.
-func NewParser(r io.Reader) *Parser {
-	p := &Parser{s: scanner.NewScanner(r)}
+// By default, it operates in strict mode. Behavior can be customized with
+// ParserOptions, such as WithLaxParsing().
+func NewParser(r io.Reader, opts ...ParserOption) *Parser {
+	// Default configuration
+	config := ParserConfig{
+		Strict: true,
+	}
+
+	// Apply all options
+	for _, opt := range opts {
+		opt(&config)
+	}
+
+	p := &Parser{
+		s:      scanner.NewScanner(r),
+		config: config,
+	}
 	p.scan() // Initialize the first token
 	return p
 }
@@ -121,6 +158,11 @@ func (p *Parser) Parse() (*Game, error) {
 	for {
 		switch p.tok.Type {
 		case scanner.EOF:
+			// In strict mode, a game must end with a result token.
+			// Reaching EOF without one is an error.
+			if p.config.Strict && len(game.Moves) > 0 {
+				return nil, fmt.Errorf("unexpected EOF: game must end with a result token")
+			}
 			return game, nil
 		case scanner.LBRACKET:
 			// If we are already parsing moves and see a new tag, the game has ended
@@ -141,6 +183,9 @@ func (p *Parser) Parse() (*Game, error) {
 			// After parsing movetext, we might have a result token.
 			if isResult(p.tok) {
 				game.Result = p.tok.Literal
+			} else if p.config.Strict {
+				// If we finish parsing moves and don't have a result, it's an error in strict mode.
+				return nil, fmt.Errorf("game must end with a result token, got %v", p.tok)
 			}
 			return game, nil
 		default:
@@ -432,10 +477,10 @@ func newSquare(s string) (Square, bool) {
 // It is intended for quickly parsing a complete PGN string already in memory.
 // For parsing from files or network streams, creating a Parser with NewParser
 // is recommended.
-func ParseString(s string) (*Game, error) {
+func ParseString(s string, opts ...ParserOption) (*Game, error) {
 	// Trim the UTF-8 Byte Order Mark (BOM) if it exists. Some PGN files
 	// may contain this, which can cause parsing to fail.
 	s = strings.TrimPrefix(s, "\uFEFF")
-	p := NewParser(strings.NewReader(s))
+	p := NewParser(strings.NewReader(s), opts...)
 	return p.Parse()
 }

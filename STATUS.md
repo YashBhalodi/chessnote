@@ -114,4 +114,13 @@ With the addition of comprehensive testing and documentation, the library is now
 
 ### Future Milestones
 
-- **`chessnote`
+- **`chessnote`** CLI Tool
+- Semantic Validator
+
+---
+
+### Recently Completed
+
+- **Parser Configuration**: Implemented a flexible configuration system for the parser using functional options. The parser now defaults to a strict mode that requires a game termination token, but can be switched to a more lenient "lax" mode. This aligns the parser's default behavior with the formal PGN specification while still supporting malformed PGNs.
+- **`CONTRIBUTING.md`**: Created a comprehensive guide for new contributors.
+- **Fuzz Testing**: Hardened the parser with a fuzz testing suite.
