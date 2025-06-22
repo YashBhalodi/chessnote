@@ -13,7 +13,7 @@ Every decision, from API design to testing strategy, should be made with these t
 
 ## 2. Go Language & Style
 
-- **Idiomatic Go:** All code must be written in an idiomatic Go style. When in doubt, refer to [Effective Go](https://go.dev/doc/effective_go).
+- **Idiomatic Go:** All code must be written in an idiomatic Go style. When in doubt, refer to [Effective Go](mdc:https:/go.dev/doc/effective_go).
 - **Formatting:** All Go code **must** be formatted with `go fmt` before being committed. This is non-negotiable and will be enforced by our CI pipeline.
 - **Linting:** All code must pass `go vet` and our chosen linter's checks without errors.
 
@@ -75,3 +75,13 @@ We employ a multi-layered testing strategy to ensure correctness and robustness.
 - **GoDoc is Mandatory:** Every single exported function, type, and field in the public API must have a clear and concise GoDoc comment explaining its purpose.
 - **README is the Entrypoint:** The `README.md` must be kept up-to-date with project status, installation instructions, and a quick-start guide.
 - **Examples:** The `examples/` directory should contain working, self-contained examples of how to use the library to solve common tasks.
+
+## 11. Living Documentation
+We treat our documentation as code. It is not an afterthought but a critical part of our development process and a key component of the finished product. Stale or inaccurate documentation is a bug and reflects poorly on the quality of our engineering.
+- **Documentation is Part of the Definition of Done**: A feature is not considered complete until its corresponding documentation is written and updated.
+- **Commit-Coupled Updates**: All documentation related to a code change must be included in the same commit. This ensures that our documentation always reflects the current state of the main branch. This includes, but is not limited to:
+  - The main README.md for high-level feature announcements or usage changes.
+  - The technical documentation in the docs/ directory for architectural or implementation changes.
+  - GoDoc comments for any public API modifications.
+  - The examples/ directory to demonstrate new or changed functionality.
+- **Reviewer Responsibility**: Code reviewers are equally responsible for verifying the quality and completeness of documentation changes. A pull request should not be approved if its documentation is missing, unclear, or inaccurate.
