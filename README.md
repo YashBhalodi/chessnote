@@ -10,7 +10,7 @@ We're not just parsing text; we're providing a reliable, rigorously-tested, and 
 
 ## Why ChessNote?
 
-In a world of hobbyist libraries, ChessNote is engineered for professional use. It's built on a philosophy of reliability and performance, making it the ideal choice for startups and developers who need a parser that just works.
+ChessNote is engineered for production usecases. It's built on a philosophy of reliability and performance, making it the ideal choice for startups and developers who need a parser that just works.
 
 *   **Rock-Solid Reliability:** Built with a strict **Test-Driven Development (TDD)** methodology, ChessNote boasts comprehensive test coverage. Every feature, from simple pawn moves to complex variations, is verified. The parser is designed to handle real-world, messy PGNs without panicking, returning structured errors that make debugging a breeze.
 
